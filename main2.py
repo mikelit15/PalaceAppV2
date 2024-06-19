@@ -4,20 +4,22 @@ import time
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, \
                             QDialog
 from PyQt6.QtGui import QPixmap
-from PyQt6.QtCore import Qt, QCoreApplication, QTimer
+from PyQt6.QtCore import Qt, QCoreApplication
 
 # Define card ranks and values
 RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
 VALUES = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
-CARD_WIDTH = 70 
-CARD_HEIGHT = 105  
+CARD_WIDTH = 70  
+CARD_HEIGHT = 105 
 BUTTON_WIDTH = 76  
-BUTTON_HEIGHT = 111 
+BUTTON_HEIGHT = 111  
 
 class Player:
     def __init__(self, name):
         self.name = name
         self.hand = []
+        self.face_up = []
+        self.face_down = []
         self.bottom_cards = []
         self.top_cards = []
         self.sevenSwitch = False  # Flag to restrict playable cards to 7 and lower or 2/10 for one turn
@@ -45,6 +47,7 @@ class AIPlayer(Player):
         super().__init__("AI")
 
     def play_turn(self, pile):
+        time.sleep(4)
         if not pile:
             return self.hand.index(min(self.hand, key=lambda card: VALUES[card[0]]))
         if self.sevenSwitch:
@@ -156,7 +159,7 @@ class PalaceGame(QWidget):
 
     def init_ui(self):
         self.setWindowTitle('Palace Card Game')
-        self.setGeometry(450, 30, 1000, 500)
+        self.setGeometry(450, 50, 1000, 500)
         self.setFixedSize(1000, 1000)
         self.layout = QVBoxLayout()
 
@@ -182,7 +185,7 @@ class PalaceGame(QWidget):
         self.deck_label = QLabel()  # Initialize the deck label
         self.deck_label.setFixedWidth(150)
         center.addWidget(self.deck_label)
-        self.pile_label = QLabel("Pile: Empty")
+        self.pile_label = QLabel()
         self.pile_label.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
         self.pile_label.setStyleSheet("border: 0px solid black; background-color: transparent;")
         self.pile_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -229,11 +232,14 @@ class PalaceGame(QWidget):
         current_player = self.players[self.current_player_index]
         current_player.pick_up_pile(self.pile)
         self.pile = []
-        self.pile_label.setText("Pile: Empty")
         current_player.sevenSwitch = False
-        self.update_ui()
         self.change_turn()
-        
+
+    def change_turn(self):
+        self.current_player_index = (self.current_player_index + 1) % len(self.players)
+        self.selected_cards = []  # Clear selected cards on turn change
+        self.update_ui()
+
     def setup_game(self):
         self.players.append(Player("Player"))
         for _ in range(self.num_players - 1):
@@ -283,7 +289,6 @@ class PalaceGame(QWidget):
             pixmap = QPixmap(fr"C:\workspace\PalaceAppV2\cards/{card[0].lower()}_of_{card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             button.setPixmap(pixmap)
             button.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            button.setDisabled(True)
             self.top_cards_layout.addWidget(button)
 
     def update_bottom_cards_buttons(self):
@@ -306,9 +311,8 @@ class PalaceGame(QWidget):
             button = QLabel()
             button.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
             button.setStyleSheet("border: 0px solid black; background-color: transparent;")
-            pixmap = QPixmap(f"cards/{card[0].lower()}_of_{card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            pixmap = QPixmap(fr"C:\workspace\PalaceAppV2\cards/{card[0].lower()}_of_{card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             button.setPixmap(pixmap)
-            button.setDisabled(True)
             button.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.ai_top_cards_layout.addWidget(button)
 
@@ -327,12 +331,21 @@ class PalaceGame(QWidget):
     def update_ui(self):
         current_player = self.players[self.current_player_index]
         self.current_player_label.setText(f"Current Player: {current_player.name}")
-        
-        # Update AI hand
-        ai_player = self.players[1]  # Assuming AI player is the second player
-        self.update_ai_hand(ai_player.hand)
-        # Update current player hand
-        self.update_player_hand(current_player.hand)
+        if self.pile:
+            top_card = self.pile[-1]
+            pixmap = QPixmap(fr"C:\workspace\PalaceAppV2\cards/{top_card[0].lower()}_of_{top_card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            self.pile_label.setPixmap(pixmap)
+        else:
+            self.pile_label.setText("Pile: Empty")
+    
+            # Update AI hand
+            ai_player = self.players[1]  # Assuming AI player is the second player
+            self.update_ai_hand(ai_player.hand)
+            
+            # Update current player hand
+            player = self.players[0]
+            self.update_player_hand(player.hand)
+
         if self.deck:
             self.deck_label.setText(f"Draw Deck:\n\n{len(self.deck)} cards remaining")
         else:
@@ -346,6 +359,9 @@ class PalaceGame(QWidget):
                 self.play_card_buttons[i].setEnabled(True)
 
         self.place_button.setEnabled(len(self.selected_cards) > 0)  # Ensure place button is enabled only if cards are selected
+
+        if isinstance(current_player, AIPlayer):
+            self.ai_play_turn()
         
     def is_card_playable(self, card):
         if not self.pile:
@@ -365,47 +381,60 @@ class PalaceGame(QWidget):
             button = QLabel()
             button.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
             button.setStyleSheet("border: 0px solid black; background-color: transparent;")
-            pixmap = QPixmap(f"cards/{card_rank.lower()}_of_{card_suit.lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            pixmap = QPixmap(fr"C:\workspace\PalaceAppV2\cards/{card_rank.lower()}_of_{card_suit.lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             button.setPixmap(pixmap)
             button.setAlignment(Qt.AlignmentFlag.AlignCenter)
             button.mousePressEvent = lambda event, idx=i, btn=button: self.prepare_card_placement(idx, btn)
             self.play_buttons_layout.addWidget(button)
             self.play_card_buttons.append(button)
-
+            
     def update_ai_hand(self, hand):
-        for i in reversed(range(self.ai_hand_layout.count())):
-            item = self.ai_hand_layout.itemAt(i)
+        # Clear existing widgets in the AI hand layout
+        while self.ai_hand_layout.count() > 0:
+            item = self.ai_hand_layout.takeAt(0)
             if item:
                 widget = item.widget()
                 if widget:
                     widget.deleteLater()
+            QCoreApplication.processEvents()
+
+        # Update AI hand layout with current hand
         for card in hand:
             button = QLabel(f"{card[0]} of {card[1]}")
             button.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
             button.setStyleSheet("border: 0px solid black; background-color: transparent;")
-            pixmap = QPixmap(f"cards/{card[0].lower()}_of_{card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            pixmap = QPixmap(fr"C:\workspace\PalaceAppV2\cards/{card[0].lower()}_of_{card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             button.setPixmap(pixmap)
             button.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.ai_hand_layout.addWidget(button)
+            QCoreApplication.processEvents()
 
     def update_player_hand(self, hand):
-        for i in reversed(range(self.player_hand_layout.count())):
-            item = self.player_hand_layout.itemAt(i)
+        # Clear existing widgets in the player hand layout
+        while self.player_hand_layout.count() > 0:
+            item = self.player_hand_layout.takeAt(0)
             if item:
                 widget = item.widget()
                 if widget:
                     widget.deleteLater()
+            QCoreApplication.processEvents()
 
-        for card in hand:
+        # Update player hand layout with current hand
+        row_layout = QHBoxLayout()
+        for i, card in enumerate(hand):
+            if i > 0 and i % 12 == 0:  # Start a new row after every 12 cards
+                self.player_hand_layout.addLayout(row_layout)
+                row_layout = QHBoxLayout()
             card_label = QLabel()
             card_label.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
             card_label.setStyleSheet("border: 0px solid black; background-color: transparent;")
             pixmap = QPixmap(fr"C:\workspace\PalaceAppV2\cards\{card[0].lower()}_of_{card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             card_label.setPixmap(pixmap)
             card_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            card_label.mousePressEvent = lambda event, idx=hand.index(card), lbl=card_label: self.prepare_card_placement(idx, lbl)
-            self.player_hand_layout.addWidget(card_label)
+            card_label.mousePressEvent = lambda event, idx=i, lbl=card_label: self.prepare_card_placement(idx, lbl)
+            row_layout.addWidget(card_label)
             self.play_card_buttons.append(card_label)
+        self.player_hand_layout.addLayout(row_layout)
 
     def prepare_card_placement(self, card_index, card_label):
         card = self.players[self.current_player_index].hand[card_index]
@@ -434,14 +463,6 @@ class PalaceGame(QWidget):
 
         self.place_button.setEnabled(len(self.selected_cards) > 0)  # Enable place button if any card is selected
 
-    def change_turn(self):
-        self.current_player_index = (self.current_player_index + 1) % len(self.players)
-        self.selected_cards = []  # Clear selected cards on turn change
-        self.update_ui()
-        if isinstance(self.players[self.current_player_index], AIPlayer):
-            self.ai_play_turn()
-
-    
     def place_card(self):
         current_player = self.players[self.current_player_index]
         played_cards = []
@@ -467,25 +488,11 @@ class PalaceGame(QWidget):
             current_player.hand.append(self.deck.pop(0))
         if '2' in [card[0] for card in played_cards]:
             self.players[self.current_player_index].sevenSwitch = False
-            if self.pile:
-                top_card = self.pile[-1]
-                pixmap = QPixmap(fr"C:\workspace\PalaceAppV2\cards/{top_card[0].lower()}_of_{top_card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-                self.pile_label.setPixmap(pixmap)
-            else:
-                self.pile_label.setText("Pile: Empty")
-            QCoreApplication.processEvents()
             self.check_game_state()
             self.update_ui()
         elif '10' in [card[0] for card in played_cards]:
             self.pile.clear()
             self.players[self.current_player_index].sevenSwitch = False
-            if self.pile:
-                top_card = self.pile[-1]
-                pixmap = QPixmap(fr"C:\workspace\PalaceAppV2\cards/{top_card[0].lower()}_of_{top_card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-                self.pile_label.setPixmap(pixmap)
-            else:
-                self.pile_label.setText("Pile: Empty")
-            QCoreApplication.processEvents()
             self.check_game_state()
             self.update_ui()
         else:
@@ -495,24 +502,18 @@ class PalaceGame(QWidget):
                 self.players[(self.current_player_index + 1) % len(self.players)].sevenSwitch = False
             self.place_button.setEnabled(False)
             self.check_game_state()
-            if self.pile:
-                top_card = self.pile[-1]
-                pixmap = QPixmap(fr"C:\workspace\PalaceAppV2\cards/{top_card[0].lower()}_of_{top_card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-                self.pile_label.setPixmap(pixmap)
-            else:
-                self.pile_label.setText("Pile: Empty")
+            self.update_ui()
             QCoreApplication.processEvents()
             self.change_turn()
 
     def ai_play_turn(self):
-        time.sleep(3)
         ai_player = self.players[self.current_player_index]
         top_pile = self.pile[-1] if self.pile else None
         card_index = ai_player.play_turn(self.pile)
+
         if card_index == -1:
             ai_player.add_to_hand(self.pile)
             self.pile = []
-            self.pile_label.setText("Pile: Empty")
             print(f"{ai_player.name} picks up the pile")
             self.change_turn()
         else:
@@ -530,40 +531,22 @@ class PalaceGame(QWidget):
 
             if '2' in [card[0] for card in played_cards]:
                 self.players[self.current_player_index].sevenSwitch = False
-                if self.pile:
-                    top_card = self.pile[-1]
-                    pixmap = QPixmap(fr"C:\workspace\PalaceAppV2\cards/{top_card[0].lower()}_of_{top_card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-                    self.pile_label.setPixmap(pixmap)
-                else:
-                    self.pile_label.setText("Pile: Empty")
-                QCoreApplication.processEvents()
                 self.check_game_state()
-                self.ai_play_turn()
+                self.update_ui()
             elif '10' in [card[0] for card in played_cards]:
                 self.pile.clear()
                 self.players[self.current_player_index].sevenSwitch = False
-                if self.pile:
-                    top_card = self.pile[-1]
-                    pixmap = QPixmap(fr"C:\workspace\PalaceAppV2\cards/{top_card[0].lower()}_of_{top_card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-                    self.pile_label.setPixmap(pixmap)
-                else:
-                    self.pile_label.setText("Pile: Empty")
-                QCoreApplication.processEvents()
                 self.check_game_state()
-                self.ai_play_turn()
+                self.update_ui()
             else:
                 if '7' in [card[0] for card in played_cards]:
                     self.players[(self.current_player_index + 1) % len(self.players)].sevenSwitch = True
                 else:
                     self.players[(self.current_player_index + 1) % len(self.players)].sevenSwitch = False
                 self.place_button.setEnabled(True)
-                if self.pile:
-                    top_card = self.pile[-1]
-                    pixmap = QPixmap(fr"C:\workspace\PalaceAppV2\cards/{top_card[0].lower()}_of_{top_card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-                    self.pile_label.setPixmap(pixmap)
-                else:
-                    self.pile_label.setText("Pile: Empty")
                 self.check_game_state()
+                self.update_ui()
+                QCoreApplication.processEvents()
                 self.change_turn()
 
     def check_four_of_a_kind(self):
@@ -586,3 +569,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
