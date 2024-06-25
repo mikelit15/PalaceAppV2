@@ -6,9 +6,7 @@ from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt, QCoreApplication, QTimer
 import qdarktheme
 
-'''
-Dark Mode Styling
-'''
+# Dark Mode Styling
 Dark = qdarktheme.load_stylesheet(
             theme="dark",
             custom_colors=
@@ -42,6 +40,71 @@ CARD_HEIGHT = 105
 BUTTON_WIDTH = 76
 BUTTON_HEIGHT = 111
 
+class HomeScreen(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.init_ui()
+
+    def init_ui(self):
+        self.setWindowTitle('Palace')
+        self.setGeometry(660, 215, 600, 500)
+        layout = QVBoxLayout()
+        title = QLabel("Palace")
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title.setStyleSheet("font-size: 36px; font-weight: bold;")
+        layout.addWidget(title)
+        
+        button_layout = QVBoxLayout()
+        
+        button_layout.addWidget(QLabel(""))
+        button_layout.addWidget(QLabel(""))
+        
+        play_button = QPushButton("Play")
+        play_button.setFixedHeight(45)
+        play_button.setFixedWidth(250)
+        play_button.clicked.connect(self.start_game)
+        button_layout.addWidget(play_button)
+        
+        button_layout.addWidget(QLabel(""))
+        button_layout.addWidget(QLabel(""))
+        
+        rules_button = QPushButton("Rules")
+        rules_button.clicked.connect(self.show_rules)
+        button_layout.addWidget(rules_button)
+        
+        button_layout.addWidget(QLabel(""))
+        
+        exit_button = QPushButton("Exit")
+        exit_button.clicked.connect(QCoreApplication.instance().quit)
+        button_layout.addWidget(exit_button)
+        
+        button_layout.addWidget(QLabel(""))
+        
+        button_container = QWidget()
+        button_container.setLayout(button_layout)
+        button_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(button_container)
+
+        self.setLayout(layout)
+
+    def start_game(self):
+        self.hide()
+        controller = GameController(2)  # Start game with 2 players
+        controller.view.show()
+
+    def show_rules(self):
+        rules_dialog = QDialog(self)
+        rules_dialog.setWindowTitle("Rules")
+        rules_dialog.setGeometry(760, 300, 400, 300)
+        layout = QVBoxLayout()
+        rules_label = QLabel("Rules of the game will be displayed here.")
+        layout.addWidget(rules_label)
+        close_button = QPushButton("Close")
+        close_button.clicked.connect(rules_dialog.accept)
+        layout.addWidget(close_button)
+        rules_dialog.setLayout(layout)
+        rules_dialog.exec()
+
 class ChooseTopCardsDialog(QDialog):
     def __init__(self, player, parent=None):
         super().__init__(parent)
@@ -52,7 +115,7 @@ class ChooseTopCardsDialog(QDialog):
 
     def init_ui(self):
         self.setWindowTitle('Choose Top Cards')
-        self.setGeometry(600, 300, 600, 400)
+        self.setGeometry(610, 270, 600, 400)
         self.layout = QVBoxLayout()
 
         self.cards_layout = QHBoxLayout()
@@ -360,7 +423,6 @@ class GameView(QWidget):
         pixmap = QPixmap(fr"C:\workspace\PalaceAppV2\cards/{card[0].lower()}_of_{card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
         card_label.setPixmap(pixmap)
 
-
 class GameController:
     def __init__(self, num_players):
         self.view = GameView(self)
@@ -407,8 +469,8 @@ class GameController:
 
         self.deal_initial_cards()
         self.choose_top_cards()  # Ask player to select top cards
-        self.view.update_player_hand(self.players[0].hand, False)
-        self.view.update_ai_hand(self.players[1].hand, False)
+        self.view.update_player_hand(self.players[0].hand)
+        self.view.update_ai_hand(self.players[1].hand)
         self.update_ui()
 
     def create_deck(self):
@@ -443,11 +505,11 @@ class GameController:
         current_player = self.players[self.current_player_index]
         self.view.update_ui(current_player, len(self.deck), self.pile)
         if isinstance(current_player, AIPlayer):
-            self.view.update_ai_hand(current_player.hand, False)
+            self.view.update_ai_hand(current_player.hand)
             self.view.pick_up_pile_button.setDisabled(True)
         else:
             self.view.pick_up_pile_button.setDisabled(False)
-            self.view.update_player_hand(current_player.hand, False)
+            self.view.update_player_hand(current_player.hand)
             self.update_playable_cards()
 
     def prepare_card_placement(self, card_index, card_label):
@@ -501,7 +563,7 @@ class GameController:
         while len(player.hand) < 3 and self.deck:
             player.hand.append(self.deck.pop(0))
 
-        self.view.update_player_hand(player.hand, False)  # Update the player hand layout
+        self.view.update_player_hand(player.hand)  # Update the player hand layout
 
         # Update the state of playable cards
         self.update_playable_cards()
@@ -540,6 +602,7 @@ class GameController:
             self.change_turn()
 
     def ai_play_turn(self):
+        time.sleep(2)
         ai_player = self.players[self.current_player_index]
         player_top_cards = self.players[0].top_cards  # Assuming player is always the first in the list
         played_cards = []
@@ -564,7 +627,7 @@ class GameController:
             while len(ai_player.hand) < 3 and self.deck:
                 ai_player.hand.append(self.deck.pop(0))
 
-            self.view.update_ai_hand(ai_player.hand, ai_player.bottom_cards_reached)
+            self.view.update_ai_hand(ai_player.hand)
 
             # Check if 4 cards of the same rank in a row have been played
             if self.check_four_of_a_kind():
@@ -656,10 +719,9 @@ class GameController:
 def main():
     app = QApplication(sys.argv)
     app.setStyleSheet(Dark)
-    controller = GameController(2)  # Adjust number of players as needed
-    controller.view.show()
+    home_screen = HomeScreen()
+    home_screen.show()
     sys.exit(app.exec())
 
 if __name__ == '__main__':
     main()
-
