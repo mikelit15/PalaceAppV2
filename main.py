@@ -35,10 +35,10 @@ Dark = qdarktheme.load_stylesheet(
 
 RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
 VALUES = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
-CARD_WIDTH = 70
-CARD_HEIGHT = 105
-BUTTON_WIDTH = 76
-BUTTON_HEIGHT = 111
+CARD_WIDTH = 70 
+CARD_HEIGHT = 105 
+BUTTON_WIDTH = 78
+BUTTON_HEIGHT = 108 
 
 class HomeScreen(QWidget):
     def __init__(self):
@@ -123,7 +123,7 @@ class ChooseTopCardsDialog(QDialog):
             button = QLabel()
             button.setFixedSize(108, 151)  # Slightly wider than the image
             button.setStyleSheet("border: 0px solid black; background-color: transparent;")
-            pixmap = QPixmap(fr"C:\workspace\PalaceAppV2\cards/{card[0].lower()}_of_{card[1].lower()}.png").scaled(100, 150, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            pixmap = QPixmap(fr"_internal/cards/{card[0].lower()}_of_{card[1].lower()}.png").scaled(100, 150, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             button.setPixmap(pixmap)
             button.setAlignment(Qt.AlignmentFlag.AlignCenter)
             button.mousePressEvent = lambda event, idx=i, btn=button: self.select_card(idx, btn)
@@ -243,6 +243,8 @@ class AIPlayer(Player):
         self.hand = sorted_hand[3:]
 
 class GameView(QWidget):
+    global scaling_factor_width
+    global scaling_factor_height
     def __init__(self, controller, parent=None):
         super().__init__(parent)
         self.controller = controller
@@ -332,17 +334,17 @@ class GameView(QWidget):
             self.controller.play_card_buttons = []  # Clear existing play card buttons
 
         for idx, card in enumerate(hand):
-            card_label = QLabel()
-            card_label.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
-            card_label.setStyleSheet("border: 0px solid black; background-color: transparent;")
-            pixmap = QPixmap(fr"C:\workspace\PalaceAppV2\cards\{card[0].lower()}_of_{card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-            card_label.setPixmap(pixmap)
-            card_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            button = QLabel()
+            button.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
+            button.setStyleSheet("border: 0px solid black; background-color: transparent;")
+            pixmap = QPixmap(fr"_internal\cards\{card[0].lower()}_of_{card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            button.setPixmap(pixmap)
+            button.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
             if is_player:
-                card_label.mousePressEvent = lambda event, idx=idx, lbl=card_label: self.controller.prepare_card_placement(idx, lbl)
-                self.controller.play_card_buttons.append(card_label)
-            layout.addWidget(card_label)
+                button.mousePressEvent = lambda event, idx=idx, lbl=button: self.controller.prepare_card_placement(idx, lbl)
+                self.controller.play_card_buttons.append(button)
+            layout.addWidget(button)
 
     def update_player_hand(self, hand):
         self.update_hand(hand, self.player_hand_layout, is_player=True)
@@ -358,7 +360,7 @@ class GameView(QWidget):
             button = QLabel()
             button.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
             button.setStyleSheet("border: 0px solid black; background-color: transparent;")
-            pixmap = QPixmap(fr"C:\workspace\PalaceAppV2\cards\{card[0].lower()}_of_{card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            pixmap = QPixmap(f"_internal\cards\{card[0].lower()}_of_{card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             button.setPixmap(pixmap)
             button.setAlignment(Qt.AlignmentFlag.AlignCenter)
             button.setDisabled(True)
@@ -372,7 +374,7 @@ class GameView(QWidget):
             button = QLabel()
             button.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
             button.setStyleSheet("border: 0px solid black; background-color: transparent;")
-            pixmap = QPixmap(r"C:\workspace\PalaceAppV2\cards\back.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            pixmap = QPixmap(r"_internal\cards\back.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             button.setPixmap(pixmap)
             button.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.bottom_cards_layout.addWidget(button)
@@ -385,7 +387,7 @@ class GameView(QWidget):
             button = QLabel()
             button.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
             button.setStyleSheet("border: 0px solid black; background-color: transparent;")
-            pixmap = QPixmap(f"cards/{card[0].lower()}_of_{card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            pixmap = QPixmap(f"_internal/cards/{card[0].lower()}_of_{card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             button.setPixmap(pixmap)
             button.setDisabled(True)
             button.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -399,7 +401,7 @@ class GameView(QWidget):
             button = QLabel()
             button.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
             button.setStyleSheet("border: 0px solid black; background-color: transparent;")
-            pixmap = QPixmap(r"C:\workspace\PalaceAppV2\cards\back.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            pixmap = QPixmap(r"_internal\cards\back.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             button.setPixmap(pixmap)
             button.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.ai_bottom_cards_layout.addWidget(button)
@@ -414,13 +416,13 @@ class GameView(QWidget):
 
         if pile:
             top_card = pile[-1]
-            pixmap = QPixmap(fr"C:\workspace\PalaceAppV2\cards/{top_card[0].lower()}_of_{top_card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            pixmap = QPixmap(fr"_internal/cards/{top_card[0].lower()}_of_{top_card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             self.pile_label.setPixmap(pixmap)
         
         self.place_button.setEnabled(len(self.controller.selected_cards) > 0)
     
     def reveal_card(self, card_label, card):
-        pixmap = QPixmap(fr"C:\workspace\PalaceAppV2\cards/{card[0].lower()}_of_{card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        pixmap = QPixmap(fr"_internal/cards/{card[0].lower()}_of_{card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
         card_label.setPixmap(pixmap)
 
 class GameController:
@@ -580,7 +582,7 @@ class GameController:
         if '2' in [card[0] for card in played_cards]:
             self.players[self.current_player_index].sevenSwitch = False
             top_card = self.pile[-1]
-            pixmap = QPixmap(fr"C:\workspace\PalaceAppV2\cards/{top_card[0].lower()}_of_{top_card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            pixmap = QPixmap(fr"_internal/cards/{top_card[0].lower()}_of_{top_card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             self.view.pile_label.setPixmap(pixmap)
             self.update_ui()
             self.check_game_state()
@@ -597,12 +599,13 @@ class GameController:
                 self.players[(self.current_player_index + 1) % len(self.players)].sevenSwitch = False
             self.view.place_button.setEnabled(False)
             top_card = self.pile[-1]
-            pixmap = QPixmap(fr"C:\workspace\PalaceAppV2\cards/{top_card[0].lower()}_of_{top_card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            pixmap = QPixmap(fr"_internal/cards/{top_card[0].lower()}_of_{top_card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             self.view.pile_label.setPixmap(pixmap)
+            self.check_game_state()
             self.change_turn()
 
     def ai_play_turn(self):
-        time.sleep(2)
+        time.sleep(1)
         ai_player = self.players[self.current_player_index]
         player_top_cards = self.players[0].top_cards  # Assuming player is always the first in the list
         played_cards = []
@@ -642,7 +645,7 @@ class GameController:
                 self.players[self.current_player_index].sevenSwitch = False
                 if self.pile:
                     top_card = self.pile[-1]
-                    pixmap = QPixmap(fr"C:\workspace\PalaceAppV2\cards/{top_card[0].lower()}_of_{top_card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                    pixmap = QPixmap(fr"_internal/cards/{top_card[0].lower()}_of_{top_card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
                     self.view.pile_label.setPixmap(pixmap)
                 else:
                     self.view.pile_label.setText("Pile: Empty")
@@ -663,7 +666,7 @@ class GameController:
                     self.players[(self.current_player_index + 1) % len(self.players)].sevenSwitch = False
                 self.view.place_button.setEnabled(False)
                 top_card = self.pile[-1]
-                pixmap = QPixmap(fr"C:\workspace\PalaceAppV2\cards/{top_card[0].lower()}_of_{top_card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                pixmap = QPixmap(fr"_internal/cards/{top_card[0].lower()}_of_{top_card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
                 self.view.pile_label.setPixmap(pixmap)
                 self.update_ui()
                 self.check_game_state()
@@ -706,6 +709,7 @@ class GameController:
                 print(f"{current_player.name} wins!")
                 self.view.pick_up_pile_button.setDisabled(True)
                 self.view.place_button.setDisabled(True)
+                self.timer.stop()
 
     def update_playable_cards(self):
         current_player = self.players[0]
@@ -717,8 +721,16 @@ class GameController:
                 lbl.setEnabled(False)
 
 def main():
+    global scaling_factor_width
+    global scaling_factor_height
     app = QApplication(sys.argv)
     app.setStyleSheet(Dark)
+    screen = app.primaryScreen()
+    screen_size = screen.size()
+    screen_width = screen_size.width()
+    screen_height = screen_size.height()
+    scaling_factor_width = screen_width / 1920
+    scaling_factor_height = screen_height / 1080
     home_screen = HomeScreen()
     home_screen.show()
     sys.exit(app.exec())
