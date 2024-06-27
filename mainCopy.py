@@ -47,9 +47,9 @@ Dark = qdarktheme.load_stylesheet(
                                             stop:0 #004080, stop:1 #001B3D);
             }
             QPushButton:disabled {
-                background-color: #202124; 
+                background-color: #1A1A1C; 
                 border: 1px solid #3B3B3B;
-                color: #FFFFFF;   
+                color: #3B3B3B;   
             }
             """
 
@@ -132,33 +132,25 @@ class HomeScreen(QWidget):
         </ul>
         <h2>The Deal</h2>
         <ul>
-            <li>Deal three cards face down to each player. Players are not allowed to look at these cards and must place them 
-            face down in three rows in front of each player.</li>
+            <li>Deal three cards face down to each player. Players are not allowed to look at these cards and must place them face down in three rows in front of each player.</li>
             <li>Deal six cards to each player face down. Players may look at these cards in their hand.</li>
-            <li>Players select three cards from their hand and place them face up on the three face down cards in front of them. 
-            Typically, higher value cards are placed face up.</li>
+            <li>Players select three cards from their hand and place them face up on the three face down cards in front of them. Typically, higher value cards are placed face up.</li>
             <li>Place the remaining cards face down in the center of the table to form the Draw pile.</li>
         </ul>
         <h2>The Play</h2>
         <ul>
-            <li>The first player turns over the top card of the Draw pile to form the Discard pile. This turned over card is 
-            called the Start card.</li>
-            <li>The first player plays a card that is equal to or of higher value than the Start card by placing that card on 
-            top of the Start card. You can play multiple cards in your turn, as long as they're all equal to or higher and of the same rank.</li>
+            <li>The first player turns over the top card of the Draw pile to form the Discard pile. This turned over card is called the Start card.</li>
+            <li>The first player plays a card that is equal to or of higher value than the Start card by placing that card on top of the Start card. You can play multiple cards in your turn, as long as they're all equal to or higher and of the same rank.</li>
             <li>Once you have finished your turn, draw cards from the Draw pile to maintain three cards in your hand at all times.</li>
             <li>You must play a card if you can. If you can't play, you have to pick up the discard pile and add it to your hand.</li>
             <li>On their turn, a player can play any 2 card which resets the discard pile to 2, starting the sequence all over.</li>
-            <li>On their turn, a player can play the 10 on any card, but it takes the discard pile out of the game instead of resetting 
-            it. The player who put the 10 down then draws up to three cards and plays any card.</li>
-            <li>If four of the same numbers are played in a row, either by one player or multiple players, it clears the discard pile. Place it 
-            to the side, as these cards are out of the game. The next player can play any card from their hand.</li>
+            <li>On their turn, a player can play the 10 on any card, but it takes the discard pile out of the game instead of resetting it. The player who put the 10 down then draws up to three cards and plays any card.</li>
+            <li>If four of the same numbers are played in a row, either by one player or multiple players, it clears the discard pile. Place it to the side, as these cards are out of the game. The next player can play any card from their hand.</li>
             <li>Play continues around the table until the Draw pile is depleted.</li>
-            <li>Once the Draw pile is depleted, players rely solely on the cards in their hand. Keep playing until there are no cards left in your 
-            hand. If you can't play on your turn, you still have to pick up the discard pile and put it in your hand.</li>
+            <li>Once the Draw pile is depleted, players rely solely on the cards in their hand. Keep playing until there are no cards left in your hand. If you can't play on your turn, you still have to pick up the discard pile and put it in your hand.</li>
             <li>Once you pick up the discard pile, you must play all of those cards before playing from your cards on the table.</li>
             <li>When it's your turn and you don't have a hand, play one card from your face-up cards in front of you.</li>
-            <li>When it's your turn and you've played all your face-up cards, pick a card that's face-down on the table. Don't look at it to choose. 
-            Simply flip it over. If it plays on the current card by being equal or higher, you can play it. If not, you must pick up the discard pile.</li>
+            <li>When it's your turn and you've played all your face-up cards, pick a card that's face-down on the table. Don't look at it to choose. Simply flip it over. If it plays on the current card by being equal or higher, you can play it. If not, you must pick up the discard pile.</li>
             <li>If you pick up the discard pile, you must play those before continuing to play your face-down cards.</li>
         </ul>
         <h2>How to Keep Score</h2>
@@ -333,12 +325,10 @@ class GameView(QWidget):
         self.confirmButton.clicked.connect(self.confirmTopCardSelection)
         self.layout.addWidget(self.confirmButton)
 
-        self.placeButton = QPushButton("Select A Card")
-        self.placeButton.setFixedWidth(300)
+        self.placeButton = QPushButton("Place")
         self.placeButton.setEnabled(False)
         self.placeButton.clicked.connect(self.controller.placeCard)
         self.placeButton.setVisible(False)
-        
         self.layout.addWidget(self.placeButton)
 
         self.setLayout(self.layout)
@@ -490,17 +480,7 @@ class GameView(QWidget):
     def clearSelectionLayout(self):
         self.chosenCards = []
         self.cardButtons = []
-
-    # def getCardFront(cardSuit, cardRank, width=CARD_WIDTH, height=CARD_HEIGHT):
-    #     print(cardSuit)
-    #     print(cardRank)
-    #     return QPixmap(f"_internal/cards/{cardSuit.lower()}_of_{cardRank.lower()}.png").scaled(
-    #         width, height, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-    
-    # def getCardBack(width=CARD_WIDTH, height=CARD_HEIGHT):
-    #     return QPixmap(r"_internal\cards\back.png").scaled(
-    #         width, height, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-    
+        
 class GameController:
     def __init__(self, numPlayers):
         self.view = GameView(self)
@@ -574,11 +554,9 @@ class GameController:
         if not self.topCardSelectionPhase:
             self.view.updateUI(currentPlayer, len(self.deck), self.pile)
             if isinstance(currentPlayer, AIPlayer):
-                self.view.placeButton.setText("AI Turn...")  
                 self.view.updateAIHand(currentPlayer.hand)
                 self.view.pickUpPileButton.setDisabled(True)
             else:
-                self.view.placeButton.setText("Select A Card")  
                 self.view.pickUpPileButton.setDisabled(False)
                 self.view.updatePlayerHand(currentPlayer.hand)
                 if not self.topCardSelectionPhase:
@@ -610,10 +588,6 @@ class GameController:
                     lbl.setEnabled(False)
 
         self.view.placeButton.setEnabled(len(self.selectedCards) > 0)  # Enable place button if any card is selected
-        if self.view.placeButton.text() == "Place":
-            self.view.placeButton.setText("Select A Card")
-        else:
-            self.view.placeButton.setText("Place")
 
     def isCardPlayable(self, card):
         topCard = self.pile[-1] if self.pile else None
@@ -677,7 +651,6 @@ class GameController:
             self.view.pileLabel.setPixmap(pixmap)
             self.checkGameState()
             self.changeTurn()
-        self.view.placeButton.setText("AI Turn...")    
 
     def AIPlayTurn(self):
         time.sleep(1)
