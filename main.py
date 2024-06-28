@@ -2,63 +2,61 @@ import sys
 import random
 import time
 from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QDialog
-from PyQt6.QtGui import QPixmap
+from PyQt6.QtGui import QPixmap, QIcon
 from PyQt6.QtCore import Qt, QCoreApplication, QTimer
 import qdarktheme
 
-
 # Dark Mode Styling
 Dark = qdarktheme.load_stylesheet(
-            theme="dark",
-            custom_colors=
-            {
-                "[dark]": 
-                {
-                    "primary": "#0078D4",
-                    "background": "#202124",
-                    "border": "#8A8A8A",
-                    "background>popup": "#252626",
-                }
-            },
-        ) + """
-            QMessageBox QLabel {
-                color: #E4E7EB;
-            }
-            QDialog {
-                background-color: #252626;
-            }
-            QComboBox:disabled {
-                background-color: #1A1A1C; 
-                border: 1px solid #3B3B3B;
-                color: #3B3B3B;  
-            }
-            QPushButton {
-            background-color: #0078D4; 
-            color: #FFFFFF;           
-            border: 1px solid #8A8A8A; 
-            }
-            QPushButton:hover {
-                background-color: #669df2; 
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                            stop:0 #80CFFF, stop:1 #004080);
-            }
-            QPushButton:pressed {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                            stop:0 #004080, stop:1 #001B3D);
-            }
-            QPushButton:disabled {
-                background-color: #202124; 
-                border: 1px solid #3B3B3B;
-                color: #FFFFFF;   
-            }
-            """
+    theme="dark",
+    custom_colors={
+        "[dark]": {
+            "primary": "#0078D4",
+            "background": "#202124",
+            "border": "#8A8A8A",
+            "background>popup": "#252626",
+        }
+    },
+) + """
+    QMessageBox QLabel {
+        color: #E4E7EB;
+    }
+    QDialog {
+        background-color: #252626;
+    }
+    QComboBox:disabled {
+        background-color: #1A1A1C; 
+        border: 1px solid #3B3B3B;
+        color: #3B3B3B;  
+    }
+    QPushButton {
+    background-color: #0078D4; 
+    color: #FFFFFF;           
+    border: 1px solid #8A8A8A; 
+    }
+    QPushButton:hover {
+        background-color: #669df2; 
+        background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                    stop:0 #80CFFF, stop:1 #004080);
+    }
+    QPushButton:pressed {
+        background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                    stop:0 #004080, stop:1 #001B3D);
+    }
+    QPushButton:disabled {
+        background-color: #202124; 
+        border: 1px solid #3B3B3B;
+        color: #FFFFFF;   
+    }
+"""
 
 RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
 VALUES = {'2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14}
-CARD_WIDTH = 56 
-CARD_HEIGHT = 84 
+CARD_WIDTH = 56
+CARD_HEIGHT = 84
 BUTTON_WIDTH = 66
-BUTTON_HEIGHT = 87 
+BUTTON_HEIGHT = 87
+
 
 class HomeScreen(QWidget):
     def __init__(self):
@@ -67,39 +65,40 @@ class HomeScreen(QWidget):
 
     def initUI(self):
         self.setWindowTitle('Palace')
+        self.setWindowIcon(QIcon(r"_internal\palaceData\palace.ico"))
         self.setGeometry(660, 215, 600, 500)
         layout = QVBoxLayout()
         title = QLabel("Palace")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title.setStyleSheet("font-size: 36px; font-weight: bold;")
         layout.addWidget(title)
-        
+
         buttonLayout = QVBoxLayout()
-        
+
         buttonLayout.addWidget(QLabel(""))
         buttonLayout.addWidget(QLabel(""))
-        
+
         playButton = QPushButton("Play")
         playButton.setFixedHeight(45)
         playButton.setFixedWidth(250)
         playButton.clicked.connect(self.startGame)
         buttonLayout.addWidget(playButton)
-        
+
         buttonLayout.addWidget(QLabel(""))
         buttonLayout.addWidget(QLabel(""))
-        
+
         rulesButton = QPushButton("Rules")
         rulesButton.clicked.connect(self.showRules)
         buttonLayout.addWidget(rulesButton)
-        
+
         buttonLayout.addWidget(QLabel(""))
-        
+
         exitButton = QPushButton("Exit")
         exitButton.clicked.connect(QCoreApplication.instance().quit)
         buttonLayout.addWidget(exitButton)
-        
+
         buttonLayout.addWidget(QLabel(""))
-        
+
         buttonContainer = QWidget()
         buttonContainer.setLayout(buttonLayout)
         buttonLayout.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -116,9 +115,10 @@ class HomeScreen(QWidget):
         rulesDialog = QDialog(self)
         rulesDialog.setWindowTitle("Rules")
         rulesDialog.setGeometry(560, 100, 800, 300)
+        rulesDialog.setWindowIcon(QIcon(r"_internal\palaceData\palace.ico"))
         layout = QVBoxLayout()
         rulesLabel = QLabel(
-        """<h2>The Pack</h2>
+            """<h2>The Pack</h2>
         <ul>
             <li>2-4 players use one standard deck of 52 cards.</li>
         </ul>
@@ -134,37 +134,37 @@ class HomeScreen(QWidget):
         </ul>
         <h2>The Deal</h2>
         <ul>
-            <li>Deal three cards face down to each player. Players are not allowed to look at these cards and must place them 
+            <li>Deal three cards face down to each player. Players are not allowed to look at these cards and must place them
             face down in three columns in front of each player.</li>
             <li>Deal six cards to each player face down. Players may look at these cards in their hand.</li>
-            <li>Players select three cards from their hand and place them face up on the three face down cards in front of them. 
+            <li>Players select three cards from their hand and place them face up on the three face down cards in front of them.
             Typically, higher value cards are placed face up.</li>
             <li>Place the remaining cards from the deck face down in the center of the table to form the Draw pile.</li>
         </ul>
         <h2>The Play</h2>
         <ul>
-            <li>The player with the agreed worst average top cards is the first player and the second player is clockwise or counter clockwise 
+            <li>The player with the agreed worst average top cards is the first player and the second player is clockwise or counter clockwise
             with the second worst average top cards.</li>
-            <li>The first player plays any card from their hand. You can play multiple cards on your turn, as long as they're all equal to or 
+            <li>The first player plays any card from their hand. You can play multiple cards on your turn, as long as they're all equal to or
             higher than the top pile card.</li>
             <li>Once you have have finished your turn, draw cards from the Draw pile to maintain three cards in your hand at all times.</li>
             <li>You must play a card if you can or pick up the current pile and add it to your hand.</li>
             <li>On their turn, a player can play any 2 card which resets the top pile card to 2, starting the sequence all over.</li>
-            <li>On their turn, a player can play the 10 on any card, but it puts the pile into a bomb pile instead of resetting the sequence. The 
+            <li>On their turn, a player can play the 10 on any card, but it puts the pile into a bomb pile instead of resetting the sequence. The
             player who put the 10 down then draws up to three cards and plays any card.</li>
-            <li>If four of the same rank are played in a row, either by one player or multiple players, it clears the pile. Place it in the bomb pile, 
+            <li>If four of the same rank are played in a row, either by one player or multiple players, it clears the pile. Place it in the bomb pile,
             as these cards are out of the game. The player that played the fourth card can then play any card from their hand.</li>
             <li>Play continues around the table until the deck is depleted.</li>
-            <li>Once the deck is depleted, players rely solely on the cards in their hand. Keep playing until there are no cards left in your 
+            <li>Once the deck is depleted, players rely solely on the cards in their hand. Keep playing until there are no cards left in your
             hand.</li>
             <li>When it's your turn and you don't have a hand, play one card from your face-up cards in front of you.</li>
-            <li>When it's your turn and you've played all your face-up cards, pick a card that's face-down on the table. Don't look at it to choose. 
+            <li>When it's your turn and you've played all your face-up cards, pick a card that's face-down on the table. Don't look at it to choose.
             Simply flip it over. If it plays on the current card by being equal or higher, you can play it. If not, you must pick up the discard pile.</li>
             <li>If you pick up the discard pile, you must play those before continuing to play your face-down cards.</li>
             <li>First player to finish all cards in hand, face-up cards, and face-down cards, wins the game.</li>
         </ul>
         <ul>
-            <li>   
+            <li>
         </ul>
         """
         )
@@ -178,6 +178,7 @@ class HomeScreen(QWidget):
         rulesDialog.setLayout(layout)
         rulesDialog.exec()
 
+
 class Player:
     def __init__(self, name):
         self.name = name
@@ -185,7 +186,6 @@ class Player:
         self.bottomCards = []
         self.topCards = []
         self.sevenSwitch = False  # Flag to restrict playable cards to 7 and lower or 2/10 for one turn
-        self.bottomCardsReached = False
 
     def playCard(self, cardIndex, pile):
         card = self.hand.pop(cardIndex)
@@ -205,6 +205,7 @@ class Player:
         else:
             return any(card[0] == '2' or VALUES[card[0]] >= VALUES[topPile[-1][0]] for card in self.hand)
 
+
 class AIPlayer(Player):
     def __init__(self):
         super().__init__("AI")
@@ -214,7 +215,7 @@ class AIPlayer(Player):
             return [self.hand.index(min(self.hand, key=lambda card: VALUES[card[0]]))]
 
         validCards = [card for card in self.hand if self.isCardPlayable(card, pile)]
-        
+
         if not validCards:
             return -1
 
@@ -252,20 +253,23 @@ class AIPlayer(Player):
         self.topCards = sortedHand[:3]
         self.hand = sortedHand[3:]
 
+
 class GameView(QWidget):
     global scalingFactorWidth
     global scalingFactorHeight
+
     def __init__(self, controller, parent=None):
         super().__init__(parent)
         self.controller = controller
-        self.playCardButtons = [] 
+        self.playCardButtons = []
         self.initUI()
 
     def initUI(self):
         self.setWindowTitle('Palace Card Game')
-        self.setGeometry(560, 115, 1000, 500)
+        self.setWindowIcon(QIcon(r"_internal\palaceData\palace.ico"))
+        self.setGeometry(560, 115, 2000, 500)
         self.setFixedSize(800, 800)
-        
+
         self.layout = QVBoxLayout()
 
         # AI player's hand
@@ -326,7 +330,7 @@ class GameView(QWidget):
         # Play card buttons layout
         self.playButtonsLayout = QHBoxLayout()  # Initialize the layout for play buttons
         self.layout.addLayout(self.playButtonsLayout)
-        
+
         self.confirmButton = QPushButton("Confirm")
         self.confirmButton.setEnabled(False)
         self.confirmButton.clicked.connect(self.confirmTopCardSelection)
@@ -337,7 +341,7 @@ class GameView(QWidget):
         self.placeButton.setEnabled(False)
         self.placeButton.clicked.connect(self.controller.placeCard)
         self.placeButton.setVisible(False)
-        
+
         self.layout.addWidget(self.placeButton)
 
         self.setLayout(self.layout)
@@ -356,8 +360,13 @@ class GameView(QWidget):
             button = QLabel()
             button.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
             button.setStyleSheet("border: 0px solid black; background-color: transparent;")
-            pixmap = QPixmap(fr"_internal\palaceData\cards\{card[0].lower()}_of_{card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-            button.setPixmap(pixmap)
+            if not card[2]:  # Check if isBottomCard is False
+                pixmap = QPixmap(
+                    fr"_internal\palaceData\cards\{card[0].lower()}_of_{card[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                button.setPixmap(pixmap)
+            else:
+                pixmap = QPixmap(r"_internal\palaceData\cards\back.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                button.setPixmap(pixmap)
             button.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
             if isPlayer:
@@ -373,7 +382,7 @@ class GameView(QWidget):
 
     def updatePlayerHand(self, hand):
         self.updateHand(hand, self.playerHandLayout, isPlayer=True)
-        
+
     def updateAIHand(self, hand):
         self.updateHand(hand, self.AIHandLayout, isPlayer=False)
 
@@ -498,11 +507,12 @@ class GameView(QWidget):
     #     print(cardRank)
     #     return QPixmap(f"_internal/palaceData/cards/{cardSuit.lower()}_of_{cardRank.lower()}.png").scaled(
     #         width, height, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-    
+
     # def getCardBack(width=CARD_WIDTH, height=CARD_HEIGHT):
     #     return QPixmap(r"_internal\palaceData\cards\back.png").scaled(
     #         width, height, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-    
+
+
 class GameController:
     def __init__(self, numPlayers):
         self.view = GameView(self)
@@ -530,23 +540,29 @@ class GameController:
 
     def pickUpPile(self):
         currentPlayer = self.players[self.currentPlayerIndex]
+        pickedUpCards = self.pile[:]
         currentPlayer.pickUpPile(self.pile)
-        self.pile = []
         print(f"{currentPlayer.name} picks up the pile")
         self.view.pileLabel.setText("Pile: Empty")
         currentPlayer.sevenSwitch = False
+        # Update hand to reveal any picked-up bottom cards
+        for card in pickedUpCards:
+            if card[2]:  # if isBottomCard is True
+                if card in currentPlayer.hand:
+                    index = currentPlayer.hand.index(card)
+                    currentPlayer.hand[index] = (card[0], card[1], False)  # Reveal the card in the hand
+                    if index < self.view.playerHandLayout.count():
+                        self.view.revealCard(self.view.playerHandLayout.itemAt(index).widget(), card)  # Reveal the card
         self.updateUI()
         QCoreApplication.processEvents()
         self.changeTurn()
-
+        
     def setupGame(self):
         self.players.append(Player("Player"))
         for _ in range(self.numPlayers - 1):
             self.players.append(AIPlayer())
-
         self.deck = self.createDeck()
         random.shuffle(self.deck)
-
         self.dealInitialCards()
         self.view.updatePlayerHand(self.players[0].hand)
         self.view.showTopCardSelection(self.players[0])
@@ -562,12 +578,12 @@ class GameController:
         self.startGameLoop()  # Start the game loop after top card selection
 
     def createDeck(self):
-        suits = ['hearts', 'diamonds', 'clubs', 'spades']
-        return [(rank, suit) for rank in RANKS for suit in suits]
+        suits = ['clubs', 'spades']
+        return [(rank, suit, False) for rank in RANKS for suit in suits]  # Adding isBottomCard as False
 
     def dealInitialCards(self):
         for player in self.players:
-            player.bottomCards = self.deck[:3]
+            player.bottomCards = [(card[0], card[1], True) for card in self.deck[:3]]  # Set isBottomCard to True
             player.hand = self.deck[3:9]
             self.deck = self.deck[9:]
 
@@ -576,11 +592,11 @@ class GameController:
         if not self.topCardSelectionPhase:
             self.view.updateUI(currentPlayer, len(self.deck), self.pile)
             if isinstance(currentPlayer, AIPlayer):
-                self.view.placeButton.setText("AI Turn...")  
+                self.view.placeButton.setText("AI Turn...")
                 self.view.updateAIHand(currentPlayer.hand)
                 self.view.pickUpPileButton.setDisabled(True)
             else:
-                self.view.placeButton.setText("Select A Card")  
+                self.view.placeButton.setText("Select A Card")
                 self.view.pickUpPileButton.setDisabled(False)
                 self.view.updatePlayerHand(currentPlayer.hand)
                 if not self.topCardSelectionPhase:
@@ -588,29 +604,26 @@ class GameController:
 
     def prepareCardPlacement(self, cardIndex, cardLabel):
         card = self.players[self.currentPlayerIndex].hand[cardIndex]
-        
         if (card, cardLabel) in self.selectedCards:
             self.selectedCards.remove((card, cardLabel))
             cardLabel.setStyleSheet("border: 0px solid black; background-color: transparent;")  # Unhighlight the deselected card
         else:
             self.selectedCards.append((card, cardLabel))
             cardLabel.setStyleSheet("border: 0px solid black; background-color: blue;")  # Highlight selected card
-        
         # Enable all buttons with the same rank, disable the rest
         selectedCardRank = card[0]
         if not self.selectedCards:
             for i, lbl in enumerate(self.playCardButtons):
                 handCard = self.players[self.currentPlayerIndex].hand[i]
-                if self.isCardPlayable(handCard):
+                if handCard[2] or self.isCardPlayable(handCard):  # Always enable bottom cards
                     lbl.setEnabled(True)
         else:
             for i, lbl in enumerate(self.playCardButtons):
                 handCard = self.players[self.currentPlayerIndex].hand[i]
                 if handCard[0] == selectedCardRank or (handCard, lbl) in self.selectedCards:
                     lbl.setEnabled(True)
-                else:
+                elif not handCard[2]:  # Disable only non-bottom cards
                     lbl.setEnabled(False)
-
         self.view.placeButton.setEnabled(len(self.selectedCards) > 0)  # Enable place button if any card is selected
         if self.view.placeButton.text() == "Place":
             self.view.placeButton.setText("Select A Card")
@@ -628,12 +641,38 @@ class GameController:
     def placeCard(self):
         player = self.players[self.currentPlayerIndex]
         playedCards = []
+        pickUp = False
         for card, button in sorted(self.selectedCards, key=lambda x: self.players[self.currentPlayerIndex].hand.index(x[0])):
-            playedCards.append(card)
-            player.playCard(self.players[self.currentPlayerIndex].hand.index(card), self.pile)
-            self.view.revealCard(button, card)
-            button.setParent(None)  # Immediately remove the button from its parent
-            button.deleteLater()  # Schedule it for deletion
+            if card[2] and not self.isCardPlayable(card):
+                print(card)
+                playedCards.append(card)
+                for i, card in enumerate(playedCards):
+                    if card[2]:  # Check if it's a bottom card
+                        playedCards[i] = (card[0], card[1], False)  # Set isBottomCard to False
+                self.pile.append(playedCards)
+                pickUp = True
+                button.setParent(None)  # Immediately remove the button from its parent
+                button.deleteLater()  # Schedule it for deletion
+            else:
+                playedCards.append(card)
+                player.playCard(self.players[self.currentPlayerIndex].hand.index(card), self.pile)
+                for i, card in enumerate(playedCards):
+                    if card[2]:  # Check if it's a bottom card
+                        playedCards[i] = (card[0], card[1], False)  # Set isBottomCard to False
+                button.setParent(None)  # Immediately remove the button from its parent
+                button.deleteLater()  # Schedule it for deletion
+        
+        if pickUp:
+            print(self.pile)
+            for card in player.hand:
+                if card[2]:
+                    player.bottomCards.extend(card)
+            player.pickUpPile(self.pile)
+            player.hand = [card for card in player.hand if not card[2]]
+            self.view.updateBottomCardButtons(player.bottomCards)
+            self.changeTurn()
+            return
+            
         self.selectedCards = []  # Clear selected cards
         print(f"{player.name} plays {', '.join([f'{card[0]} of {card[1]}' for card in playedCards])}")
 
@@ -650,7 +689,7 @@ class GameController:
         if self.checkFourOfAKind():
             print("Four of a kind! Clearing the pile.")
             self.pile.clear()
-            self.view.pileLabel.setText("Pile: Bombed")
+            self.view.pileLabel.setText("Bombed")
             self.updateUI()
             gameOver = self.checkGameState()
             return
@@ -667,7 +706,7 @@ class GameController:
         elif '10' in [card[0] for card in playedCards]:
             self.pile.clear()
             self.players[self.currentPlayerIndex].sevenSwitch = False
-            self.view.pileLabel.setText("Pile: Bombed")
+            self.view.pileLabel.setText("Bombed")
             self.updateUI()
             gameOver = self.checkGameState()
             if gameOver:
@@ -685,78 +724,113 @@ class GameController:
             if gameOver:
                 return
             self.changeTurn()
-        self.view.placeButton.setText("AI Turn...")    
+        self.view.placeButton.setText("AI Turn...")
+
 
     def AIPlayTurn(self):
-        # time.sleep(1)
         AIPlayer = self.players[self.currentPlayerIndex]
         playerTopCards = self.players[0].topCards  # Assuming player is always the first in the list
         playedCards = []
+        pickUp = False
         cardIndices = AIPlayer.playTurn(self.pile, len(self.deck), playerTopCards)
+
         if cardIndices == -1:
             self.pickUpPile()
             return
-        else:
-            cardIndices = sorted(cardIndices, reverse=True)
-            for cardIndex in cardIndices:
-                playedCard = AIPlayer.hand[cardIndex]
-                AIPlayer.playCard(cardIndex, self.pile)
-                playedCards.append(playedCard)
-                # Find the corresponding QLabel in the AI hand layout and reveal the card
+                    
+        for cardIndex in sorted(cardIndices, reverse=True):
+            card = AIPlayer.hand[cardIndex]
+            if card[2] and not self.isCardPlayable(card):
+                playedCards.append(card)
+                pickUp = True
                 cardLabel = self.view.AIHandLayout.itemAt(cardIndex).widget()
-                self.view.revealCard(cardLabel, playedCard)
+                if cardLabel:
+                    self.view.revealCard(cardLabel, card)
                 cardLabel.setParent(None)
                 cardLabel.deleteLater()  # Schedule it for deletion
-            print(f"{AIPlayer.name} plays {', '.join([f'{card[0]} of {card[1]}' for card in playedCards])}")
-
-            # Draw cards if fewer than 3 in hand
-            while len(AIPlayer.hand) < 3 and self.deck:
-                AIPlayer.hand.append(self.deck.pop(0))
-
-            self.view.updateAIHand(AIPlayer.hand)
-
-            # Check if 4 cards of the same rank in a row have been played
-            if self.checkFourOfAKind():
-                print("Four of a kind! Clearing the pile.")
-                self.pile.clear()
-                self.view.pileLabel.setText("Pile: Bombed")
-                self.updateUI()
-                gameOver = self.checkGameState()
-                return
-
-            if '2' in [card[0] for card in playedCards]:
-                self.players[self.currentPlayerIndex].sevenSwitch = False
-                if self.pile:
-                    topCard = self.pile[-1]
-                    pixmap = QPixmap(fr"_internal/palaceData/cards/{topCard[0].lower()}_of_{topCard[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-                    self.view.pileLabel.setPixmap(pixmap)
-                else:
-                    self.view.pileLabel.setText("Pile: Empty")
-                self.updateUI()
-                gameOver = self.checkGameState()
-                return
-            elif '10' in [card[0] for card in playedCards]:
-                self.pile.clear()
-                self.players[self.currentPlayerIndex].sevenSwitch = False
-                self.view.pileLabel.setText("Pile: Bombed")
-                self.updateUI()
-                gameOver = self.checkGameState()
-                return
+                break  # Stop processing further cards as we need to pick up the pile
             else:
-                if '7' in [card[0] for card in playedCards]:
-                    self.players[(self.currentPlayerIndex + 1) % len(self.players)].sevenSwitch = True
-                else:
-                    self.players[(self.currentPlayerIndex + 1) % len(self.players)].sevenSwitch = False
-                self.view.placeButton.setEnabled(False)
+                playedCards.append(card)
+                AIPlayer.playCard(cardIndex, self.pile)
+                cardLabel = self.view.AIHandLayout.itemAt(cardIndex).widget()
+                if cardLabel:
+                    self.view.revealCard(cardLabel, card)
+                cardLabel.setParent(None)
+                cardLabel.deleteLater()  # Schedule it for deletion
+
+        for i, card in enumerate(playedCards):
+            if card[2]:  # Check if it's a bottom card
+                playedCards[i] = (card[0], card[1], False)  # Set isBottomCard to False
+
+        if pickUp:
+            pickedUpCards = self.pile[:]
+            AIPlayer.pickUpPile(self.pile)
+            for card in pickedUpCards:
+                if card[2]:  # if isBottomCard is True
+                    if card in AIPlayer.hand:
+                        index = AIPlayer.hand.index(card)
+                        AIPlayer.hand[index] = (card[0], card[1], False)  # Reveal the card in the hand
+                        if index < self.view.playerHandLayout.count():
+                            self.view.revealCard(self.view.playerHandLayout.itemAt(index).widget(), card)  # Reveal the card
+            for card in AIPlayer.hand:
+                if card[2]:
+                    bottom_cards_to_move = [card for card in AIPlayer.hand if card[2]]
+                    AIPlayer.bottomCards.extend(bottom_cards_to_move)
+                    AIPlayer.hand = [card for card in AIPlayer.hand if not card[2]]
+            self.view.updateAIBottomCardButtons(AIPlayer.bottomCards)
+            self.changeTurn()
+            return
+        
+        print(f"{AIPlayer.name} plays {', '.join([f'{card[0]} of {card[1]}' for card in playedCards])}")
+
+        # Draw cards if fewer than 3 in hand
+        while len(AIPlayer.hand) < 3 and self.deck:
+            AIPlayer.hand.append(self.deck.pop(0))
+
+        self.view.updateAIHand(AIPlayer.hand)
+
+        # Check if 4 cards of the same rank in a row have been played
+        if self.checkFourOfAKind():
+            print("Four of a kind! Clearing the pile.")
+            self.pile.clear()
+            self.view.pileLabel.setText("Bombed")
+            self.updateUI()
+            gameOver = self.checkGameState()
+            return
+        
+        if '2' in [card[0] for card in playedCards]:
+            self.players[self.currentPlayerIndex].sevenSwitch = False
+            if self.pile:
                 topCard = self.pile[-1]
                 pixmap = QPixmap(fr"_internal/palaceData/cards/{topCard[0].lower()}_of_{topCard[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
                 self.view.pileLabel.setPixmap(pixmap)
-                self.updateUI()
-                gameOver = self.checkGameState()
-                if gameOver:
-                    return
-                self.changeTurn()
+            else:
+                self.view.pileLabel.setText("Pile: Empty")
+            self.updateUI()
+            gameOver = self.checkGameState()
+            return
+        elif '10' in [card[0] for card in playedCards]:
+            self.pile.clear()
+            self.players[self.currentPlayerIndex].sevenSwitch = False
+            self.view.pileLabel.setText("Bombed")
+            self.updateUI()
+            gameOver = self.checkGameState()
+            return
+        else:
+            if '7' in [card[0] for card in playedCards]:
+                self.players[(self.currentPlayerIndex + 1) % len(self.players)].sevenSwitch = True
+            else:
+                self.players[(self.currentPlayerIndex + 1) % len(self.players)].sevenSwitch = False
+            self.view.placeButton.setEnabled(False)
+            topCard = self.pile[-1]
+            pixmap = QPixmap(fr"_internal/palaceData/cards/{topCard[0].lower()}_of_{topCard[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            self.view.pileLabel.setPixmap(pixmap)
+            self.updateUI()
+            gameOver = self.checkGameState()
+            if gameOver:
                 return
+            self.changeTurn()
+        self.view.placeButton.setText("AI Turn...")
 
     def changeTurn(self):
         self.currentPlayerIndex = (self.currentPlayerIndex + 1) % len(self.players)
@@ -800,15 +874,16 @@ class GameController:
                 print(f"{currentPlayer.name} wins!")
                 gameOver = True
         return gameOver
-    
+
     def updatePlayableCards(self):
         currentPlayer = self.players[0]
         for i, lbl in enumerate(self.playCardButtons):
             handCard = currentPlayer.hand[i]
-            if self.isCardPlayable(handCard):
+            if handCard[2] or self.isCardPlayable(handCard):  # Always enable bottom cards
                 lbl.setEnabled(True)
             else:
                 lbl.setEnabled(False)
+
 
 def main():
     global scalingFactorWidth
