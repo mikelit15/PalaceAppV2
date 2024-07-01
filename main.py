@@ -212,8 +212,11 @@ class AIPlayer(Player):
 
     def playTurn(self, pile, deckSize, playerTopCards):
         if not pile:
-            return [self.hand.index(min(self.hand, key=lambda card: VALUES[card[0]]))]
+            return [min(self.hand, key=lambda card: VALUES[card[0]])]
 
+        if all(len(card) > 2 and card[2] for card in self.hand):
+            return [random.choice(self.hand)]
+        
         validCards = [card for card in self.hand if self.isCardPlayable(card, pile)]
 
         if not validCards:
@@ -234,11 +237,11 @@ class AIPlayer(Player):
         # Always play 7s if there is a strategic advantage
         sevens = [card for card in validCards if card[0] == '7']
         if sevens:
-            return [self.hand.index(card) for card in self.hand if card[0] == '7']
-
+            return sevens
+        
         # Choose the best card to play based on the sorted valid cards
         bestCard = validCards[0]
-        return [self.hand.index(card) for card in self.hand if card[0] == bestCard[0]]
+        return [bestCard]
 
     def isCardPlayable(self, card, pile):
         topCard = pile[-1] if pile else None
@@ -501,6 +504,12 @@ class GameView(QWidget):
     def clearSelectionLayout(self):
         self.chosenCards = []
         self.cardButtons = []
+        
+    def setPlayerHandEnabled(self, enabled):
+        for i in range(self.playerHandLayout.count()):
+            widget = self.playerHandLayout.itemAt(i).widget()
+            if widget:
+                widget.setEnabled(enabled)
 
     # def getCardFront(cardSuit, cardRank, width=CARD_WIDTH, height=CARD_HEIGHT):
     #     print(cardSuit)
@@ -539,6 +548,8 @@ class GameController:
             self.view.updateUI(currentPlayer, len(self.deck), self.pile)
 
     def pickUpPile(self):
+        if self.pile == []:
+            return
         currentPlayer = self.players[self.currentPlayerIndex]
         pickedUpCards = self.pile[:]
         currentPlayer.pickUpPile(self.pile)
@@ -553,6 +564,8 @@ class GameController:
                     currentPlayer.hand[index] = (card[0], card[1], False)  # Reveal the card in the hand
                     if index < self.view.playerHandLayout.count():
                         self.view.revealCard(self.view.playerHandLayout.itemAt(index).widget(), card)  # Reveal the card
+        self.view.setPlayerHandEnabled(False)
+        self.view.placeButton.setText("AI Turn...")
         self.updateUI()
         QCoreApplication.processEvents()
         self.changeTurn()
@@ -578,7 +591,8 @@ class GameController:
         self.startGameLoop()  # Start the game loop after top card selection
 
     def createDeck(self):
-        suits = ['clubs', 'spades']
+        # suits = ['diamonds', 'hearts']
+        suits = ['diamonds', 'hearts', 'clubs', 'spades']
         return [(rank, suit, False) for rank in RANKS for suit in suits]  # Adding isBottomCard as False
 
     def dealInitialCards(self):
@@ -642,37 +656,44 @@ class GameController:
         player = self.players[self.currentPlayerIndex]
         playedCards = []
         pickUp = False
-        for card, button in sorted(self.selectedCards, key=lambda x: self.players[self.currentPlayerIndex].hand.index(x[0])):
+
+        for card, button in sorted(self.selectedCards, key=lambda x: player.hand.index(x[0])):
             if card[2] and not self.isCardPlayable(card):
                 print(card)
                 playedCards.append(card)
                 for i, card in enumerate(playedCards):
-                    if card[2]:  # Check if it's a bottom card
-                        playedCards[i] = (card[0], card[1], False)  # Set isBottomCard to False
-                self.pile.append(playedCards)
+                    self.pile.append(player.hand.pop(player.hand.index(playedCards[i])))
+                    self.pile[-1] = (card[0], card[1], False)  # Set isBottomCard to False
+                    self.view.revealCard(button, card)
                 pickUp = True
                 button.setParent(None)  # Immediately remove the button from its parent
                 button.deleteLater()  # Schedule it for deletion
             else:
                 playedCards.append(card)
-                player.playCard(self.players[self.currentPlayerIndex].hand.index(card), self.pile)
                 for i, card in enumerate(playedCards):
                     if card[2]:  # Check if it's a bottom card
                         playedCards[i] = (card[0], card[1], False)  # Set isBottomCard to False
+                player.playCard(player.hand.index(card), self.pile)
+                self.view.revealCard(button, card)
                 button.setParent(None)  # Immediately remove the button from its parent
                 button.deleteLater()  # Schedule it for deletion
-        
-        if pickUp:
-            print(self.pile)
-            for card in player.hand:
+
+        if pickUp:    
+            topCard = self.pile[-1]
+            pixmap = QPixmap(fr"_internal/palaceData/cards/{topCard[0].lower()}_of_{topCard[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            self.view.pileLabel.setPixmap(pixmap)
+            QCoreApplication.processEvents()
+            time.sleep(1.5)      
+            self.pickUpPile()
+            for card in reversed(player.hand):
                 if card[2]:
-                    player.bottomCards.extend(card)
-            player.pickUpPile(self.pile)
-            player.hand = [card for card in player.hand if not card[2]]
+                    player.bottomCards.append(player.hand.pop(player.hand.index(card)))
+            self.view.updatePlayerHand(player.hand)
             self.view.updateBottomCardButtons(player.bottomCards)
-            self.changeTurn()
+            self.view.setPlayerHandEnabled(False)
+            self.view.placeButton.setText("AI Turn...")
             return
-            
+
         self.selectedCards = []  # Clear selected cards
         print(f"{player.name} plays {', '.join([f'{card[0]} of {card[1]}' for card in playedCards])}")
 
@@ -720,67 +741,65 @@ class GameController:
             topCard = self.pile[-1]
             pixmap = QPixmap(fr"_internal/palaceData/cards/{topCard[0].lower()}_of_{topCard[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             self.view.pileLabel.setPixmap(pixmap)
+            self.updateUI()
             gameOver = self.checkGameState()
             if gameOver:
                 return
             self.changeTurn()
-        self.view.placeButton.setText("AI Turn...")
-
+            self.view.setPlayerHandEnabled(False)
+            self.view.placeButton.setText("AI Turn...")
 
     def AIPlayTurn(self):
+        time.sleep(1)
         AIPlayer = self.players[self.currentPlayerIndex]
         playerTopCards = self.players[0].topCards  # Assuming player is always the first in the list
         playedCards = []
         pickUp = False
-        cardIndices = AIPlayer.playTurn(self.pile, len(self.deck), playerTopCards)
 
-        if cardIndices == -1:
+        # Get cards to play
+        cardsToPlay = AIPlayer.playTurn(self.pile, len(self.deck), playerTopCards)
+
+        if cardsToPlay == -1:
             self.pickUpPile()
             return
-                    
-        for cardIndex in sorted(cardIndices, reverse=True):
-            card = AIPlayer.hand[cardIndex]
+        
+        for card in cardsToPlay:
+            cardIndex = AIPlayer.hand.index(card)
+            cardLabel = self.view.AIHandLayout.itemAt(cardIndex).widget()
             if card[2] and not self.isCardPlayable(card):
                 playedCards.append(card)
-                pickUp = True
-                cardLabel = self.view.AIHandLayout.itemAt(cardIndex).widget()
-                if cardLabel:
+                for i, card in enumerate(playedCards):
+                    self.pile.append(AIPlayer.hand.pop(AIPlayer.hand.index(playedCards[i])))
+                    self.pile[-1] = (card[0], card[1], False)  # Set isBottomCard to False
                     self.view.revealCard(cardLabel, card)
-                cardLabel.setParent(None)
+                pickUp = True
+                cardLabel.setParent(None)  # Immediately remove the button from its parent
                 cardLabel.deleteLater()  # Schedule it for deletion
-                break  # Stop processing further cards as we need to pick up the pile
             else:
                 playedCards.append(card)
-                AIPlayer.playCard(cardIndex, self.pile)
-                cardLabel = self.view.AIHandLayout.itemAt(cardIndex).widget()
-                if cardLabel:
-                    self.view.revealCard(cardLabel, card)
-                cardLabel.setParent(None)
+                self.pile.append(AIPlayer.hand.pop(AIPlayer.hand.index(card)))
+                self.pile[-1] = (card[0], card[1], False)  # Set isBottomCard to False
+                self.view.revealCard(cardLabel, card)
+                cardLabel.setParent(None)  # Immediately remove the button from its parent
                 cardLabel.deleteLater()  # Schedule it for deletion
 
-        for i, card in enumerate(playedCards):
-            if card[2]:  # Check if it's a bottom card
-                playedCards[i] = (card[0], card[1], False)  # Set isBottomCard to False
-
         if pickUp:
-            pickedUpCards = self.pile[:]
-            AIPlayer.pickUpPile(self.pile)
-            for card in pickedUpCards:
-                if card[2]:  # if isBottomCard is True
-                    if card in AIPlayer.hand:
-                        index = AIPlayer.hand.index(card)
-                        AIPlayer.hand[index] = (card[0], card[1], False)  # Reveal the card in the hand
-                        if index < self.view.playerHandLayout.count():
-                            self.view.revealCard(self.view.playerHandLayout.itemAt(index).widget(), card)  # Reveal the card
-            for card in AIPlayer.hand:
+            topCard = self.pile[-1]
+            pixmap = QPixmap(fr"_internal/palaceData/cards/{topCard[0].lower()}_of_{topCard[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            self.view.pileLabel.setPixmap(pixmap)
+            QCoreApplication.processEvents()
+            time.sleep(1.5)
+            self.pickUpPile()
+            print(AIPlayer.hand)
+            for card in reversed(AIPlayer.hand):
                 if card[2]:
-                    bottom_cards_to_move = [card for card in AIPlayer.hand if card[2]]
-                    AIPlayer.bottomCards.extend(bottom_cards_to_move)
-                    AIPlayer.hand = [card for card in AIPlayer.hand if not card[2]]
+                    AIPlayer.bottomCards.append(AIPlayer.hand.pop(AIPlayer.hand.index(card)))
+            self.view.updateAIHand(AIPlayer.hand)
             self.view.updateAIBottomCardButtons(AIPlayer.bottomCards)
-            self.changeTurn()
+            QCoreApplication.processEvents()
+            self.view.placeButton.setText("Select A Card")
             return
-        
+
         print(f"{AIPlayer.name} plays {', '.join([f'{card[0]} of {card[1]}' for card in playedCards])}")
 
         # Draw cards if fewer than 3 in hand
@@ -797,7 +816,7 @@ class GameController:
             self.updateUI()
             gameOver = self.checkGameState()
             return
-        
+
         if '2' in [card[0] for card in playedCards]:
             self.players[self.currentPlayerIndex].sevenSwitch = False
             if self.pile:
@@ -830,7 +849,7 @@ class GameController:
             if gameOver:
                 return
             self.changeTurn()
-        self.view.placeButton.setText("AI Turn...")
+        self.view.placeButton.setText("Select A Card")
 
     def changeTurn(self):
         self.currentPlayerIndex = (self.currentPlayerIndex + 1) % len(self.players)
