@@ -604,8 +604,8 @@ class GameController:
         self.startGameLoop()  # Start the game loop after top card selection
 
     def createDeck(self):
-        suits = ['clubs', 'spades']
-        # suits = ['diamonds', 'hearts', 'clubs', 'spades']
+        # suits = ['clubs', 'spades']
+        suits = ['diamonds', 'hearts', 'clubs', 'spades']
         return [(rank, suit, False, False) for rank in RANKS for suit in suits]  # Adding isBottomCard as False
 
     def dealInitialCards(self):
@@ -916,7 +916,6 @@ class GameController:
                 lbl.setEnabled(True)
             else:
                 lbl.setEnabled(False)
-
 
 def main():
     global scalingFactorWidth
