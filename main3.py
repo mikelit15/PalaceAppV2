@@ -216,7 +216,6 @@ class HomeScreen(QWidget):
         rulesDialog.setLayout(layout)
         rulesDialog.exec()
 
-
 class Player:
     def __init__(self, name):
         self.name = name
