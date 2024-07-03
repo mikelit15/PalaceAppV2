@@ -150,14 +150,18 @@ class HomeScreen(QWidget):
         mediumButton.setFixedWidth(75)
         hardButton = QRadioButton("Hard")
         hardButton.setFixedWidth(57)
+        impossibleButton = QRadioButton("Impossible")
+        impossibleButton.setFixedWidth(115)
 
         self.difficultyGroup.addButton(easyButton, 1)
         self.difficultyGroup.addButton(mediumButton, 2)
         self.difficultyGroup.addButton(hardButton, 3)
+        self.difficultyGroup.addButton(impossibleButton, 3)
 
         layout.addWidget(easyButton)
         layout.addWidget(mediumButton)
         layout.addWidget(hardButton)
+        layout.addWidget(impossibleButton)
         layout.addWidget(QLabel(""))
         
         buttonBox = QHBoxLayout()
@@ -307,6 +311,8 @@ class AIPlayer(Player):
             return self.playMedium(pile, deckSize, playerTopCards)
         elif self.difficulty == 'hard':
             return self.playHard(pile, deckSize, playerTopCards)
+        elif self.difficulty == 'impossible':
+            return self.playImpossible(pile, deckSize, playerTopCards)
         
     def playEasy(self, pile):
         if not pile:
@@ -376,6 +382,31 @@ class AIPlayer(Player):
 
         return [validCards[0]]
 
+    def playImpossible(self, pile, deckSize, playerTopCards):
+        if not pile:
+            return [min(self.hand, key=lambda card: VALUES[card[0]])]
+
+        if all(card[3] for card in self.hand):
+            return [random.choice(self.hand)]
+
+        validCards = [card for card in self.hand if self.isCardPlayable(card, pile)]
+        if not validCards:
+            return -1
+
+        validCards.sort(key=lambda card: VALUES[card[0]])
+
+        validNonSpecialCards = [card for card in validCards if card[0] not in ['2', '10']]
+        if validNonSpecialCards:
+            highCards = [card for card in validNonSpecialCards if VALUES[card[0]] > VALUES[pile[-1][0]]]
+            if highCards:
+                return [highCards[0]]
+
+        lowNonSpecialCards = [card for card in validCards if card[0] not in ['2', '10']]
+        if lowNonSpecialCards:
+            return [lowNonSpecialCards[0]]
+
+        return [validCards[0]]
+
     def isCardPlayable(self, card, pile):
         topCard = pile[-1] if pile else None
         if self.sevenSwitch:
@@ -389,7 +420,6 @@ class AIPlayer(Player):
         for card in sortedHand[:3]:
             self.topCards.append((card[0], card[1], True, False))
         self.hand = sortedHand[3:]
-
 
 class GameView(QWidget):
     global scalingFactorWidth
@@ -406,6 +436,12 @@ class GameView(QWidget):
         self.setWindowIcon(QIcon(r"_internal\palaceData\palace.ico"))
         self.setGeometry(250, 75, 1440, 900)
         self.setFixedSize(1440, 900)
+        
+        # self.background_label = QLabel(self)
+        # self.background_pixmap = QPixmap(r"_internal\palaceData\background.png")
+        # self.background_label.setPixmap(self.background_pixmap)
+        # self.background_label.setGeometry(self.rect())
+        # self.background_label.lower() 
 
         self.layout = QGridLayout()
         
@@ -431,8 +467,10 @@ class GameView(QWidget):
         
         self.centerLayout = QVBoxLayout()
         self.centerLayout.addWidget(QLabel(""))
-        self.centerLayout.addLayout(self.consoleLayout)
         self.centerLayout.addWidget(self.currentPlayerLabel, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.centerLayout.addLayout(self.consoleLayout)
+        self.centerLayout.addWidget(QLabel(""))
+        self.centerLayout.addWidget(QLabel(""))
         
         self.layout.addLayout(self.centerLayout, 4, 4)
 
@@ -588,6 +626,16 @@ class GameView(QWidget):
             button.setAlignment(Qt.AlignmentFlag.AlignCenter)
             button.setDisabled(True)
             self.topCardsLayout.addWidget(button)
+        if not topCards:
+            self.placeholder = QLabel()
+            self.placeholder.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
+            self.topCardsLayout.addWidget(self.placeholder)
+        else:
+            # Remove the placeholder if it exists
+            for i in reversed(range(self.topCardsLayout.count())):
+                widget = self.topCardsLayout.itemAt(i).widget()
+                if isinstance(widget, QLabel) and not widget.pixmap():
+                    widget.deleteLater()
         
     def updateBottomCardButtons(self, bottomCards):
         for i in reversed(range(self.bottomCardsLayout.count())):
@@ -601,6 +649,16 @@ class GameView(QWidget):
             button.setPixmap(pixmap)
             button.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.bottomCardsLayout.addWidget(button)
+        if not bottomCards:
+            self.placeholder = QLabel()
+            self.placeholder.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
+            self.bottomCardsLayout.addWidget(self.placeholder)
+        else:
+            # Remove the placeholder if it exists
+            for i in reversed(range(self.topCardsLayout.count())):
+                widget = self.bottomCardsLayout.itemAt(i).widget()
+                if isinstance(widget, QLabel) and not widget.pixmap():
+                    widget.deleteLater()
 
     def updateAITopCardButtons(self, topCards, ai_index):
         layout = getattr(self, f'AITopCardsLayout{ai_index}')
@@ -624,6 +682,21 @@ class GameView(QWidget):
                 button.setDisabled(True)
                 button.setAlignment(Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(button)
+        if not topCards:
+            if ai_index in [2, 3]:
+                self.placeholder = QLabel()
+                self.placeholder.setFixedSize(BUTTON_HEIGHT, BUTTON_WIDTH)
+                layout.addWidget(self.placeholder)
+            else:
+                self.placeholder = QLabel()
+                self.placeholder.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
+                layout.addWidget(self.placeholder)
+        else:
+            # Remove the placeholder if it exists
+            for i in reversed(range(layout.count())):
+                widget = layout.itemAt(i).widget()
+                if isinstance(widget, QLabel) and not widget.pixmap():
+                    widget.deleteLater()
 
     def updateAIBottomCardButtons(self, bottomCards, ai_index):
         layout = getattr(self, f'AIBottomCardsLayout{ai_index}')
@@ -646,6 +719,21 @@ class GameView(QWidget):
                 button.setPixmap(pixmap)
                 button.setAlignment(Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(button)
+        if not bottomCards:
+            if ai_index in [2, 3]:
+                self.placeholder = QLabel()
+                self.placeholder.setFixedSize(BUTTON_HEIGHT, BUTTON_WIDTH)
+                layout.addWidget(self.placeholder)
+            else:
+                self.placeholder = QLabel()
+                self.placeholder.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
+                layout.addWidget(self.placeholder)
+        else:
+            # Remove the placeholder if it exists
+            for i in reversed(range(self.topCardsLayout.count())):
+                widget = layout.itemAt(i).widget()
+                if isinstance(widget, QLabel) and not widget.pixmap():
+                    widget.deleteLater()
 
     def updateUI(self, currentPlayer, deckSize, pile):
         if self.controller.topCardSelectionPhase:
@@ -833,7 +921,7 @@ class GameController:
             else:
                 self.view.updateTopCardButtons(currentPlayer.topCards)
 
-        self.view.setPlayerHandEnabled(False)
+        # self.view.setPlayerHandEnabled(False)
         self.view.placeButton.setText("AI Turn...")
         self.updateUI()
         self.changeTurn()
@@ -1018,7 +1106,7 @@ class GameController:
             self.view.placeButton.setText("AI Turn...")
 
     def AIPlayTurn(self):
-        time.sleep(0.5)
+        time.sleep(0.7)
         AIPlayer = self.players[self.currentPlayerIndex]
         ai_index = self.players.index(AIPlayer)  # Get the index of the current AI player
         playerTopCards = self.players[0].topCards  # Assuming player is always the first in the list
@@ -1065,7 +1153,7 @@ class GameController:
                     AIPlayer.bottomCards.append(AIPlayer.hand.pop(AIPlayer.hand.index(card)))
             self.view.updateAIHand(AIPlayer.hand, ai_index)
             self.view.updateAIBottomCardButtons(AIPlayer.bottomCards, ai_index)
-            QCoreApplication.processEvents()
+            # QCoreApplication.processEvents()
             self.view.placeButton.setText("Select A Card")
             return
 
