@@ -1,8 +1,9 @@
 import sys
 import random
 import time
-from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QDialog, QGridLayout, QRadioButton, QButtonGroup
-from PyQt6.QtGui import QPixmap, QIcon, QTransform, QPainter
+from PyQt6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, \
+    QLabel, QDialog, QGridLayout, QRadioButton, QButtonGroup, QSpacerItem, QSizePolicy
+from PyQt6.QtGui import QFontMetrics, QPixmap, QIcon, QTransform, QPainter
 from PyQt6.QtCore import Qt, QCoreApplication, QTimer
 import qdarktheme
 
@@ -57,19 +58,6 @@ CARD_HEIGHT = 84
 BUTTON_WIDTH = 66
 BUTTON_HEIGHT = 87
 
-class RotatedLabel(QLabel):
-    def __init__(self, text, angle, parent=None):
-        super().__init__(text, parent)
-        self.angle = angle
-
-    def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.translate(self.rect().center())
-        painter.rotate(self.angle)
-        painter.translate(-self.rect().center())
-        painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, self.text())
-        painter.end()
-
 class HomeScreen(QWidget):
     def __init__(self):
         super().__init__()
@@ -91,30 +79,37 @@ class HomeScreen(QWidget):
         buttonLayout.addWidget(QLabel(""))
 
         playButton = QPushButton("Play")
-        playButton.setFixedHeight(45)
-        playButton.setFixedWidth(250)
+        playButton.setFixedHeight(40)
+        playButton.setFixedWidth(275)
         playButton.clicked.connect(self.showPlayerSelectionDialog)
         buttonLayout.addWidget(playButton)
 
         buttonLayout.addWidget(QLabel(""))
-        buttonLayout.addWidget(QLabel(""))
 
+        onlineButton = QPushButton("Online")
+        onlineButton.clicked.connect(self.playOnline)
+        onlineButton.setFixedWidth(225)
+        buttonLayout.addWidget(onlineButton, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        buttonLayout.addWidget(QLabel(""))
+        
         rulesButton = QPushButton("Rules")
         rulesButton.clicked.connect(self.showRules)
-        buttonLayout.addWidget(rulesButton)
+        rulesButton.setFixedWidth(225)
+        buttonLayout.addWidget(rulesButton, alignment=Qt.AlignmentFlag.AlignCenter)
 
         buttonLayout.addWidget(QLabel(""))
 
         exitButton = QPushButton("Exit")
         exitButton.clicked.connect(QCoreApplication.instance().quit)
-        buttonLayout.addWidget(exitButton)
+        exitButton.setFixedWidth(225)
+        buttonLayout.addWidget(exitButton, alignment=Qt.AlignmentFlag.AlignCenter)
 
         buttonLayout.addWidget(QLabel(""))
 
         buttonContainer = QWidget()
         buttonContainer.setLayout(buttonLayout)
-        buttonLayout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(buttonContainer)
+        layout.addWidget(buttonContainer, alignment=Qt.AlignmentFlag.AlignCenter)
 
         self.setLayout(layout)
 
@@ -130,24 +125,41 @@ class HomeScreen(QWidget):
 
         self.radioGroup = QButtonGroup(dialog)
         radioButton2 = QRadioButton("Player vs. CPU")
-        radioButton2.setFixedWidth(110)
+        radioButton2.setFixedWidth(107)
         radioButton3 = QRadioButton("Player vs. CPU vs. CPU")
         radioButton3.setFixedWidth(150)
         radioButton4 = QRadioButton("Player vs. CPU vs. CPU vs. CPU")
-        radioButton4.setFixedWidth(190)
+        radioButton4.setFixedWidth(193)
 
         self.radioGroup.addButton(radioButton2, 2)
         self.radioGroup.addButton(radioButton3, 3)
         self.radioGroup.addButton(radioButton4, 4)
 
-        layout.addWidget(QLabel(""))
         layout.addWidget(radioButton2)
-        layout.addWidget(QLabel(""))
         layout.addWidget(radioButton3)
-        layout.addWidget(QLabel(""))
         layout.addWidget(radioButton4)
         layout.addWidget(QLabel(""))
 
+        difficultyLabel = QLabel("Select AI Difficulty:")
+        layout.addWidget(difficultyLabel)
+
+        self.difficultyGroup = QButtonGroup(dialog)
+        easyButton = QRadioButton("Easy")
+        easyButton.setFixedWidth(55)
+        mediumButton = QRadioButton("Medium")
+        mediumButton.setFixedWidth(75)
+        hardButton = QRadioButton("Hard")
+        hardButton.setFixedWidth(57)
+
+        self.difficultyGroup.addButton(easyButton, 1)
+        self.difficultyGroup.addButton(mediumButton, 2)
+        self.difficultyGroup.addButton(hardButton, 3)
+
+        layout.addWidget(easyButton)
+        layout.addWidget(mediumButton)
+        layout.addWidget(hardButton)
+        layout.addWidget(QLabel(""))
+        
         buttonBox = QHBoxLayout()
         okButton = QPushButton("OK")
         cancelButton = QPushButton("Cancel")
@@ -162,12 +174,31 @@ class HomeScreen(QWidget):
 
     def startGameWithSelectedPlayers(self, dialog):
         numPlayers = self.radioGroup.checkedId()
+        difficulty = self.difficultyGroup.checkedId()
         if numPlayers in [2, 3, 4]:
             dialog.accept()
             self.hide()
-            controller = GameController(numPlayers)  # Start game with selected number of players
+            difficulty_map = {1: 'easy', 2: 'medium', 3: 'hard'}
+            difficulty_level = difficulty_map.get(difficulty, 'medium')
+            controller = GameController(numPlayers, difficulty_level)  # Start game with selected number of players and difficulty level
             controller.view.show()
 
+    def playOnline(self):
+        onlineDialog = QDialog(self)
+        onlineDialog.setWindowTitle("Online Multiplayer")
+        onlineDialog.setGeometry(835, 400, 250, 150)
+        onlineDialog.setWindowIcon(QIcon(r"_internal\palaceData\palace.ico"))
+        layout = QVBoxLayout()
+        rulesLabel = QLabel("Online Multiplayer COMING SOON!!!")
+        rulesLabel.setTextFormat(Qt.TextFormat.RichText)
+        rulesLabel.setWordWrap(True)
+        layout.addWidget(rulesLabel, alignment=Qt.AlignmentFlag.AlignCenter)
+        closeButton = QPushButton("Close")
+        closeButton.clicked.connect(onlineDialog.accept)
+        layout.addWidget(closeButton)
+        onlineDialog.setLayout(layout)
+        onlineDialog.exec()
+    
     def showRules(self):
         rulesDialog = QDialog(self)
         rulesDialog.setWindowTitle("Rules")
@@ -265,48 +296,92 @@ class Player:
 
 
 class AIPlayer(Player):
-    def __init__(self, name):
+    def __init__(self, name, difficulty='medium'):
         super().__init__(name)
+        self.difficulty = difficulty
 
     def playTurn(self, pile, deckSize, playerTopCards):
+        if self.difficulty == 'easy':
+            return self.playEasy(pile)
+        elif self.difficulty == 'medium':
+            return self.playMedium(pile, deckSize, playerTopCards)
+        elif self.difficulty == 'hard':
+            return self.playHard(pile, deckSize, playerTopCards)
+        
+    def playEasy(self, pile):
         if not pile:
             return [min(self.hand, key=lambda card: VALUES[card[0]])]
-        
+
         if all(card[3] for card in self.hand):
             return [random.choice(self.hand)]
         
         validCards = [card for card in self.hand if self.isCardPlayable(card, pile)]
-
         if not validCards:
             return -1
 
-        # Use 2s and 10s as a last resort
+        return [min(validCards, key=lambda card: VALUES[card[0]])]
+
+    def playMedium(self, pile, deckSize, playerTopCards):
+        if not pile:
+            return [min(self.hand, key=lambda card: VALUES[card[0]])]
+
+        if all(card[3] for card in self.hand):
+            return [random.choice(self.hand)]
+
+        validCards = [card for card in self.hand if self.isCardPlayable(card, pile)]
+        if not validCards:
+            return -1
+
         nonSpecialCards = [card for card in validCards if card[0] not in ['2', '10']]
         if nonSpecialCards:
             validCards = nonSpecialCards
 
-        # Sort valid cards: prefer lower cards earlier and higher cards later in the game
         validCards.sort(key=lambda card: VALUES[card[0]])
 
-        # Play higher-value cards if the deck is nearly empty or if the opponent has fewer cards
         if deckSize < 5 or len(playerTopCards) < 3:
             validCards.sort(key=lambda card: -VALUES[card[0]])
 
-        # Always play 7s if there is a strategic advantage
         sevens = [card for card in validCards if card[0] == '7']
         if sevens:
             return sevens
-        
-        # Choose the best card to play based on the sorted valid cards
-        bestCard = validCards[0]
-        return [bestCard]
+
+        return [validCards[0]]
+
+    def playHard(self, pile, deckSize, playerTopCards):
+        if not pile:
+            return [min(self.hand, key=lambda card: VALUES[card[0]])]
+
+        if all(card[3] for card in self.hand):
+            return [random.choice(self.hand)]
+
+        validCards = [card for card in self.hand if self.isCardPlayable(card, pile)]
+        if not validCards:
+            return -1
+
+        nonSpecialCards = [card for card in validCards if card[0] not in ['2', '10']]
+        if nonSpecialCards:
+            validCards = nonSpecialCards
+
+        validCards.sort(key=lambda card: VALUES[card[0]])
+
+        if deckSize < 5 or len(playerTopCards) < 3:
+            validCards.sort(key=lambda card: -VALUES[card[0]])
+
+        sevens = [card for card in validCards if card[0] == '7' and all(VALUES[c[0]] > 7 for c in self.hand)]
+        if sevens:
+            return sevens
+
+        if len(validCards) > 1 and validCards[0][0] == validCards[1][0]:
+            return [card for card in validCards if card[0] == validCards[0][0]]
+
+        return [validCards[0]]
 
     def isCardPlayable(self, card, pile):
         topCard = pile[-1] if pile else None
         if self.sevenSwitch:
             return VALUES[card[0]] <= 7 or card[0] in ['2', '10']
         if not topCard:
-            return True  # Any card is playable if the pile is empty
+            return True
         return card[0] == '2' or card[0] == '10' or VALUES[card[0]] >= VALUES[topCard[0]]
 
     def chooseTopCards(self):
@@ -329,31 +404,36 @@ class GameView(QWidget):
     def initUI(self):
         self.setWindowTitle('Palace Card Game')
         self.setWindowIcon(QIcon(r"_internal\palaceData\palace.ico"))
-        self.setGeometry(250, 75, 1400, 900)
+        self.setGeometry(250, 75, 1440, 900)
         self.setFixedSize(1440, 900)
 
         self.layout = QGridLayout()
-
+        
         # Center
         self.deckLabel = QLabel()  # Initialize the deck label
-        self.deckLabel.setFixedWidth(150)
+        self.deckLabel.setFixedWidth(190)
         self.deckLabel.setVisible(False)
-        self.deckLabel.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        self.pileLabel = QLabel("Select your 3 Top cards...")
+        self.pileLabel = QLabel("\t     Select your 3 Top cards...")
         self.pileLabel.setStyleSheet("border: 0px solid black; background-color: transparent;")
-        self.pileLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.pickUpPileButton = QPushButton("Pick Up Pile")
-        self.pickUpPileButton.setFixedWidth(150)
+        self.pickUpPileButton.setFixedWidth(125)
         self.pickUpPileButton.setVisible(False)
         self.pickUpPileButton.clicked.connect(self.controller.pickUpPile)
         self.currentPlayerLabel = QLabel("")
-        self.currentPlayerLabel.setAlignment(Qt.AlignmentFlag.AlignBottom)
         
-        self.centerLayout = QHBoxLayout()
-        self.centerLayout.addWidget(self.deckLabel)
-        self.centerLayout.addWidget(self.pileLabel)
-        self.centerLayout.addWidget(self.pickUpPileButton)
-        self.centerLayout.addWidget(self.currentPlayerLabel)
+        spacer = QSpacerItem(60, 1, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        
+        self.consoleLayout = QHBoxLayout()
+        self.consoleLayout.addWidget(self.deckLabel, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.consoleLayout.addWidget(self.pileLabel, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.consoleLayout.addItem(spacer)
+        self.consoleLayout.addWidget(self.pickUpPileButton, alignment=Qt.AlignmentFlag.AlignCenter)
+        
+        self.centerLayout = QVBoxLayout()
+        self.centerLayout.addWidget(QLabel(""))
+        self.centerLayout.addLayout(self.consoleLayout)
+        self.centerLayout.addWidget(self.currentPlayerLabel, alignment=Qt.AlignmentFlag.AlignCenter)
+        
         self.layout.addLayout(self.centerLayout, 4, 4)
 
         # Player (Bottom)
@@ -387,9 +467,9 @@ class GameView(QWidget):
         self.layout.addLayout(self.AI1Container, 0, 4)
 
         # AI Player 2 (Left)
-        self.AIPlayerLabel2 = RotatedLabel("", 90)
+        self.AIPlayerLabel2 = QLabel("")
         self.AIPlayerLabel2.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.AIPlayerLabel2.setFixedWidth(100)
+        self.AIPlayerLabel2.setFixedWidth(20)
         self.AIHandLayout2 = QVBoxLayout()
         self.AITopCardsLayout2 = QVBoxLayout()
         self.AIBottomCardsLayout2 = QVBoxLayout()
@@ -403,9 +483,9 @@ class GameView(QWidget):
         self.layout.addLayout(self.AI2Container, 4, 0)
 
         # AI Player 3 (Right)
-        self.AIPlayerLabel3 = RotatedLabel("", -90)
+        self.AIPlayerLabel3 = QLabel("")
         self.AIPlayerLabel3.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.AIPlayerLabel3.setFixedWidth(100)
+
         self.AIHandLayout3 = QVBoxLayout()
         self.AITopCardsLayout3 = QVBoxLayout()
         self.AIBottomCardsLayout3 = QVBoxLayout()
@@ -421,7 +501,7 @@ class GameView(QWidget):
         # Hide AI Player 2 and 3 layouts if less than 3 or 4 players    
         if self.controller.numPlayers < 3:
             self.AIPlayerLabel2.setText("")
-            self.setGeometry(550, 75, 1400, 900)
+            self.setGeometry(550, 75, 900, 900)
             self.setFixedSize(900, 900)
         if self.controller.numPlayers < 4:
             self.AIPlayerLabel3.setText("")
@@ -430,16 +510,16 @@ class GameView(QWidget):
         self.confirmButton = QPushButton("Confirm")
         self.confirmButton.setEnabled(False)
         self.confirmButton.clicked.connect(self.confirmTopCardSelection)
-        self.layout.addWidget(self.confirmButton, 9, 4)
+        self.layout.addWidget(self.confirmButton, 10, 4)
 
         self.placeButton = QPushButton("Select A Card")
         self.placeButton.setEnabled(False)
         self.placeButton.clicked.connect(self.controller.placeCard)
         self.placeButton.setVisible(False)
-        self.layout.addWidget(self.placeButton, 9, 4)
+        self.layout.addWidget(self.placeButton, 10, 4)
 
         self.setLayout(self.layout)
-
+    
     def updateHand(self, hand, layout, isPlayer=True, rotate=False):
         while layout.count():
             item = layout.takeAt(0)
@@ -508,7 +588,7 @@ class GameView(QWidget):
             button.setAlignment(Qt.AlignmentFlag.AlignCenter)
             button.setDisabled(True)
             self.topCardsLayout.addWidget(button)
-
+        
     def updateBottomCardButtons(self, bottomCards):
         for i in reversed(range(self.bottomCardsLayout.count())):
             self.bottomCardsLayout.itemAt(i).widget().deleteLater()
@@ -631,8 +711,49 @@ class GameView(QWidget):
                 self.AIPlayerLabel1.setText("AI Player 1's Hand")
             elif index == 2:
                 self.AIPlayerLabel2.setText("AI Player 2's Hand")
+                font = self.currentPlayerLabel.font()
+                font.setPointSize(9)  
+                self.AIPlayerLabel2.setFont(font)
+                font_metrics = QFontMetrics(font)
+                text_height = font_metrics.height()
+                self.AIPlayerLabel2.setFixedHeight(190)
+                self.AIPlayerLabel2.setFixedWidth(25)
+                transform = QTransform().rotate(90)
+                pixmap = QPixmap(self.AIPlayerLabel2.size())
+                pixmap.fill(Qt.GlobalColor.transparent)
+                painter = QPainter(pixmap)
+                painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+                painter.setRenderHint(QPainter.RenderHint.TextAntialiasing)
+                painter.setFont(font)
+                painter.setPen(Qt.GlobalColor.white)
+                painter.translate(pixmap.width(), 0)
+                painter.rotate(90)
+                painter.drawText(0, 0, self.AIPlayerLabel2.height(), self.AIPlayerLabel2.width(), Qt.AlignmentFlag.AlignCenter, self.AIPlayerLabel2.text())
+                painter.end()
+                self.AIPlayerLabel2.setPixmap(pixmap)
             elif index == 3:
                 self.AIPlayerLabel3.setText("AI Player 3's Hand") 
+                # Rotate the text
+                font = self.currentPlayerLabel.font()
+                font.setPointSize(9) 
+                self.AIPlayerLabel3.setFont(font)
+                font_metrics = QFontMetrics(font)
+                text_height = font_metrics.height()
+                self.AIPlayerLabel3.setFixedHeight(190)
+                self.AIPlayerLabel3.setFixedWidth(25)
+                transform = QTransform().rotate(-90)
+                pixmap = QPixmap(self.AIPlayerLabel3.size())
+                pixmap.fill(Qt.GlobalColor.transparent)
+                painter = QPainter(pixmap)
+                painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+                painter.setRenderHint(QPainter.RenderHint.TextAntialiasing)
+                painter.setFont(font)
+                painter.setPen(Qt.GlobalColor.white)
+                painter.translate(0, pixmap.height())
+                painter.rotate(-90)
+                painter.drawText(0, 0, self.AIPlayerLabel3.height(), self.AIPlayerLabel3.width(), Qt.AlignmentFlag.AlignCenter, self.AIPlayerLabel3.text())
+                painter.end()
+                self.AIPlayerLabel3.setPixmap(pixmap)
 
     def clearSelectionLayout(self):
         self.chosenCards = []
@@ -656,8 +777,9 @@ class GameView(QWidget):
 
 
 class GameController:
-    def __init__(self, numPlayers):
+    def __init__(self, numPlayers, difficulty):
         self.numPlayers = numPlayers
+        self.difficulty = difficulty
         self.view = GameView(self)
         self.players = []
         self.deck = []
@@ -690,6 +812,7 @@ class GameController:
         print(f"{currentPlayer.name} picks up the pile")
         self.view.pileLabel.setText("Pile: Empty")
         currentPlayer.sevenSwitch = False
+
         # Update hand to reveal any picked-up bottom cards
         for card in pickedUpCards:
             if card[3]:  # if isBottomCard is True
@@ -698,15 +821,18 @@ class GameController:
                     currentPlayer.hand[index] = (card[0], card[1], card[2], False)  # Reveal the card in the hand
                     if index < self.view.playerHandLayout.count():
                         self.view.revealCard(self.view.playerHandLayout.itemAt(index).widget(), card)  # Reveal the card
+
         for card in reversed(currentPlayer.hand):
             if card[2]:
                 currentPlayer.topCards.append(currentPlayer.hand.pop(currentPlayer.hand.index(card)))
                 top = True
         if top:
             if isinstance(currentPlayer, AIPlayer):
-                self.view.updateAITopCardButtons(currentPlayer.topCards)
+                ai_index = self.players.index(currentPlayer)
+                self.view.updateAITopCardButtons(currentPlayer.topCards, ai_index)
             else:
                 self.view.updateTopCardButtons(currentPlayer.topCards)
+
         self.view.setPlayerHandEnabled(False)
         self.view.placeButton.setText("AI Turn...")
         self.updateUI()
@@ -715,7 +841,7 @@ class GameController:
     def setupGame(self):
         self.players.append(Player("Player"))
         for _ in range(self.numPlayers - 1):
-            self.players.append(AIPlayer(f"AI{_}"))
+            self.players.append(AIPlayer(f"AI{_}", self.difficulty))
         self.deck = self.createDeck()
         random.shuffle(self.deck)
         self.dealInitialCards()
@@ -802,7 +928,6 @@ class GameController:
 
         for card, button in sorted(self.selectedCards, key=lambda x: player.hand.index(x[0])):
             if card[3] and not self.isCardPlayable(card):
-                print(card)
                 playedCards.append(card)
                 for i, card in enumerate(playedCards):
                     self.pile.append(player.hand.pop(player.hand.index(playedCards[i])))
@@ -893,7 +1018,7 @@ class GameController:
             self.view.placeButton.setText("AI Turn...")
 
     def AIPlayTurn(self):
-        time.sleep(0.75)
+        time.sleep(0.5)
         AIPlayer = self.players[self.currentPlayerIndex]
         ai_index = self.players.index(AIPlayer)  # Get the index of the current AI player
         playerTopCards = self.players[0].topCards  # Assuming player is always the first in the list
@@ -935,7 +1060,6 @@ class GameController:
             QCoreApplication.processEvents()
             time.sleep(1.5)
             self.pickUpPile()
-            print(AIPlayer.hand)
             for card in reversed(AIPlayer.hand):
                 if card[3]:
                     AIPlayer.bottomCards.append(AIPlayer.hand.pop(AIPlayer.hand.index(card)))
@@ -947,13 +1071,11 @@ class GameController:
 
         print(f"{AIPlayer.name} plays {', '.join([f'{card[0]} of {card[1]}' for card in playedCards])}")
 
-        # Draw cards if fewer than 3 in hand
         while len(AIPlayer.hand) < 3 and self.deck:
             AIPlayer.hand.append(self.deck.pop(0))
 
         self.view.updateAIHand(AIPlayer.hand, ai_index)
 
-        # Check if 4 cards of the same rank in a row have been played
         if self.checkFourOfAKind():
             print("Four of a kind! Clearing the pile.")
             self.pile.clear()
@@ -1013,10 +1135,10 @@ class GameController:
             if currentPlayer.topCards:
                 currentPlayer.hand = currentPlayer.topCards
                 currentPlayer.topCards = []
-                print(currentPlayer.hand)
                 if isinstance(currentPlayer, AIPlayer):
-                    self.view.updateAIHand(currentPlayer.hand)
-                    self.view.updateAITopCardButtons(currentPlayer.topCards)
+                    ai_index = self.players.index(currentPlayer)
+                    self.view.updateAIHand(currentPlayer.hand, ai_index)
+                    self.view.updateAITopCardButtons(currentPlayer.topCards, ai_index)
                 else:
                     self.view.updatePlayerHand(currentPlayer.hand)
                     self.view.updateTopCardButtons(currentPlayer.topCards)
@@ -1024,8 +1146,9 @@ class GameController:
                 currentPlayer.hand = currentPlayer.bottomCards
                 currentPlayer.bottomCards = []
                 if isinstance(currentPlayer, AIPlayer):
-                    self.view.updateAIHand(currentPlayer.hand)
-                    self.view.updateAIBottomCardButtons(self.players[1].bottomCards)
+                    ai_index = self.players.index(currentPlayer)
+                    self.view.updateAIHand(currentPlayer.hand, ai_index)
+                    self.view.updateAIBottomCardButtons(currentPlayer.bottomCards, ai_index)
                 else:
                     self.view.updatePlayerHand(currentPlayer.hand)
                     self.view.updateBottomCardButtons(currentPlayer.bottomCards)
