@@ -945,8 +945,8 @@ class GameController:
                 self.view.revealCard(button, card)
                 button.setParent(None)  # Immediately remove the button from its parent
                 button.deleteLater()  # Schedule it for deletion
-            
-        if pickUp:    
+
+        if pickUp:
             topCard = self.pile[-1]
             pixmap = QPixmap(fr"_internal/palaceData/cards/{topCard[0].lower()}_of_{topCard[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             self.view.pileLabel.setPixmap(pixmap)
