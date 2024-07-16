@@ -7,6 +7,38 @@ from PyQt6.QtGui import QFontMetrics, QPixmap, QIcon, QTransform, QPainter
 from PyQt6.QtCore import Qt, QCoreApplication, QTimer
 import qdarktheme
 
+'''
+Dark Mode QMessageBox Button Styling
+'''
+DarkB = ("""
+    QPushButton {
+        background-color: #0078D4; 
+        color: #FFFFFF;           
+        border: 1px solid #8A8A8A; 
+
+    }
+    QPushButton:hover {
+        background-color: #669df2; 
+        background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                    stop:0 #80CFFF, stop:1 #004080);
+    }
+    QPushButton:pressed {
+        background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                    stop:0 #004080, stop:1 #001B3D);
+    }
+""")
+
+DarkNB = ("""
+    QPushButton {
+        color: #FFFFFF;          
+    }
+    QPushButton:hover {
+        background-color: #669df2; 
+        background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                    stop:0 #80CFFF, stop:1 #004080);
+    }
+""")
+
 # Dark Mode Styling
 Dark = qdarktheme.load_stylesheet(
     theme="dark",
@@ -112,7 +144,7 @@ class HomeScreen(QWidget):
         layout.addWidget(buttonContainer, alignment=Qt.AlignmentFlag.AlignCenter)
 
         self.setLayout(layout)
-
+        
     def showPlayerSelectionDialog(self):
         dialog = QDialog(self)
         dialog.setWindowTitle("Select Number of Players")
@@ -188,20 +220,28 @@ class HomeScreen(QWidget):
             controller.view.show()
 
     def playOnline(self):
-        onlineDialog = QDialog(self)
-        onlineDialog.setWindowTitle("Online Multiplayer")
-        onlineDialog.setGeometry(835, 400, 250, 150)
-        onlineDialog.setWindowIcon(QIcon(r"_internal\palaceData\palace.ico"))
+        self.onlineDialog = QDialog(self)
+        self.onlineDialog.setWindowTitle("Online Multiplayer")
+        self.onlineDialog.setGeometry(835, 400, 250, 150)
         layout = QVBoxLayout()
-        rulesLabel = QLabel("Online Multiplayer COMING SOON!!!")
-        rulesLabel.setTextFormat(Qt.TextFormat.RichText)
-        rulesLabel.setWordWrap(True)
-        layout.addWidget(rulesLabel, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        hostButton = QPushButton("Host Lobby")
+        layout.addWidget(hostButton)
+
+        layout.addWidget(QLabel())
+        
+        joinButton = QPushButton("Join Lobby")
+        layout.addWidget(joinButton)
+        
+        layout.addWidget(QLabel())
+
         closeButton = QPushButton("Close")
-        closeButton.clicked.connect(onlineDialog.accept)
-        layout.addWidget(closeButton)
-        onlineDialog.setLayout(layout)
-        onlineDialog.exec()
+        closeButton.setFixedWidth(75)
+        closeButton.clicked.connect(self.onlineDialog.accept)
+        layout.addWidget(closeButton, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        self.onlineDialog.setLayout(layout)
+        self.onlineDialog.exec()
     
     def showRules(self):
         rulesDialog = QDialog(self)
@@ -421,6 +461,25 @@ class AIPlayer(Player):
             self.topCards.append((card[0], card[1], True, False))
         self.hand = sortedHand[3:]
 
+class RealPlayer(Player):
+    def __init__(self, name, socket):
+        super().__init__(name)
+        self.socket = socket
+
+    def send(self, data):
+        try:
+            self.socket.sendall(data.encode('utf-8'))
+        except Exception as e:
+            print(f"Error sending data: {e}")
+
+    def receive(self):
+        try:
+            data = self.socket.recv(1024).decode('utf-8')
+            return data
+        except Exception as e:
+            print(f"Error receiving data: {e}")
+            return None
+
 class GameView(QWidget):
     global scalingFactorWidth
     global scalingFactorHeight
@@ -434,8 +493,8 @@ class GameView(QWidget):
     def initUI(self):
         self.setWindowTitle('Palace Card Game')
         self.setWindowIcon(QIcon(r"_internal\palaceData\palace.ico"))
-        self.setGeometry(250, 75, 1440, 900)
-        self.setFixedSize(1440, 900)
+        self.setGeometry(250, 75, 500, 500)
+        self.setFixedSize(1100, 900)
         
         # self.background_label = QLabel(self)
         # self.background_pixmap = QPixmap(r"_internal\palaceData\background.png")
@@ -1241,6 +1300,9 @@ class GameController:
                     self.view.updatePlayerHand(currentPlayer.hand)
                     self.view.updateBottomCardButtons(currentPlayer.bottomCards)
             elif not currentPlayer.bottomCards:
+                placeholder = QLabel()
+                placeholder.setFixedSize(BUTTON_HEIGHT, BUTTON_WIDTH)
+                currentPlayer.hand.append(placeholder)
                 self.timer.stop()
                 self.view.currentPlayerLabel.setText(f"{currentPlayer.name} wins!")
                 self.view.pickUpPileButton.setDisabled(True)
@@ -1259,7 +1321,7 @@ class GameController:
                 lbl.setEnabled(True)
             else:
                 lbl.setEnabled(False)
-
+        
 def main():
     global scalingFactorWidth
     global scalingFactorHeight
