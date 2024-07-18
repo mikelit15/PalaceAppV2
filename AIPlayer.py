@@ -17,10 +17,19 @@ class AIPlayer(Player):
 
     @author Mike
     '''
-    def __init__(self, name, difficulty='medium'):
+    def __init__(self, name, difficulty='medium', is_next_player_ai=False):
         super().__init__(name)
         self.difficulty = difficulty
+        self.is_next_player_ai = is_next_player_ai
 
+    def isCardPlayable(self, card, pile):
+        if not pile:
+            return True
+        topCard = pile[-1]
+        if self.sevenSwitch:
+            return VALUES[card[0]] <= 7 or card[0] in ['2', '10']
+        return card[0] == '2' or card[0] == '10' or VALUES[card[0]] >= VALUES[topCard[0]]
+    
     '''
     Determines the AI player's move based on the difficulty level and the 
     state of the game.
@@ -34,7 +43,7 @@ class AIPlayer(Player):
 
     @author Mike
     '''
-    def playTurn(self, pile, deckSize, playerTopCards):
+    def playTurn(self, pile, deckSize, playerTopCards, playerHand=None, playerBottomCards=None):
         if self.difficulty == 'easy':
             return self.playEasy(pile)
         elif self.difficulty == 'medium':
@@ -42,7 +51,7 @@ class AIPlayer(Player):
         elif self.difficulty == 'hard':
             return self.playHard(pile, deckSize, playerTopCards)
         elif self.difficulty == 'impossible':
-            return self.playImpossible(pile, deckSize, playerTopCards)
+            return self.playImpossible(pile, deckSize, playerHand, playerTopCards, playerBottomCards)
     
     '''
     Determines the AI player's move in easy mode by playing the lowest ranked 
@@ -57,14 +66,21 @@ class AIPlayer(Player):
     '''
     def playEasy(self, pile):
         if not pile:
+            nonSpecialCards = [card for card in self.hand if card[0] not in ['2', '10']]
+            if nonSpecialCards:
+                return [min(nonSpecialCards, key=lambda card: VALUES[card[0]])]
             return [min(self.hand, key=lambda card: VALUES[card[0]])]
 
         if all(card[3] for card in self.hand):
             return [random.choice(self.hand)]
-        
+
         validCards = [card for card in self.hand if self.isCardPlayable(card, pile)]
         if not validCards:
             return -1
+
+        nonSpecialCards = [card for card in validCards if card[0] not in ['2', '10']]
+        if nonSpecialCards:
+            return [min(nonSpecialCards, key=lambda card: VALUES[card[0]])]
 
         return [min(validCards, key=lambda card: VALUES[card[0]])]
 
@@ -83,6 +99,9 @@ class AIPlayer(Player):
     '''
     def playMedium(self, pile, deckSize, playerTopCards):
         if not pile:
+            nonSpecialCards = [card for card in self.hand if card[0] not in ['2', '10']]
+            if nonSpecialCards:
+                return [min(nonSpecialCards, key=lambda card: VALUES[card[0]])]
             return [min(self.hand, key=lambda card: VALUES[card[0]])]
 
         if all(card[3] for card in self.hand):
@@ -98,12 +117,12 @@ class AIPlayer(Player):
 
         validCards.sort(key=lambda card: VALUES[card[0]])
 
-        if deckSize < 5 or len(playerTopCards) < 3:
-            validCards.sort(key=lambda card: -VALUES[card[0]])
-
         sevens = [card for card in validCards if card[0] == '7']
         if sevens:
             return sevens
+
+        if len(validCards) > 1 and validCards[0][0] == validCards[1][0]:
+            return [card for card in validCards if card[0] == validCards[0][0]]
 
         return [validCards[0]]
 
@@ -123,6 +142,9 @@ class AIPlayer(Player):
     '''
     def playHard(self, pile, deckSize, playerTopCards):
         if not pile:
+            nonSpecialCards = [card for card in self.hand if card[0] not in ['2', '10']]
+            if nonSpecialCards:
+                return [min(nonSpecialCards, key=lambda card: VALUES[card[0]])]
             return [min(self.hand, key=lambda card: VALUES[card[0]])]
 
         if all(card[3] for card in self.hand):
@@ -138,10 +160,7 @@ class AIPlayer(Player):
 
         validCards.sort(key=lambda card: VALUES[card[0]])
 
-        if deckSize < 5 or len(playerTopCards) < 3:
-            validCards.sort(key=lambda card: -VALUES[card[0]])
-
-        sevens = [card for card in validCards if card[0] == '7' and all(VALUES[c[0]] > 7 for c in self.hand)]
+        sevens = [card for card in validCards if card[0] == '7']
         if sevens:
             return sevens
 
@@ -163,8 +182,11 @@ class AIPlayer(Player):
 
     @author Mike
     '''
-    def playImpossible(self, pile, deckSize, playerTopCards):
+    def playImpossible(self, pile, deckSize, playerHand, playerTopCards, playerBottomCards):
         if not pile:
+            nonSpecialCards = [card for card in self.hand if card[0] not in ['2', '10']]
+            if nonSpecialCards:
+                return [min(nonSpecialCards, key=lambda card: VALUES[card[0]])]
             return [min(self.hand, key=lambda card: VALUES[card[0]])]
 
         if all(card[3] for card in self.hand):
@@ -173,8 +195,6 @@ class AIPlayer(Player):
         validCards = [card for card in self.hand if self.isCardPlayable(card, pile)]
         if not validCards:
             return -1
-
-        validCards.sort(key=lambda card: VALUES[card[0]])
 
         validNonSpecialCards = [card for card in validCards if card[0] not in ['2', '10']]
         if validNonSpecialCards:
@@ -185,6 +205,9 @@ class AIPlayer(Player):
         lowNonSpecialCards = [card for card in validCards if card[0] not in ['2', '10']]
         if lowNonSpecialCards:
             return [lowNonSpecialCards[0]]
+
+        if self.is_next_player_ai:
+            return [min(validCards, key=lambda card: VALUES[card[0]])]
 
         return [validCards[0]]
 

@@ -112,6 +112,7 @@ class Controller:
 
         # self.view.setPlayerHandEnabled(False)
         self.view.placeButton.setText("AI Turn...")
+        time.sleep(1)
         self.updateUI()
         self.changeTurn()
     
@@ -307,7 +308,7 @@ class Controller:
             pixmap = QPixmap(fr"_internal/palaceData/cards/{topCard[0].lower()}_of_{topCard[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             self.view.pileLabel.setPixmap(pixmap)
             QCoreApplication.processEvents()
-            time.sleep(1.5)      
+            time.sleep(1)      
             self.pickUpPile()
             for card in reversed(player.hand):
                 if card[3]:
@@ -384,16 +385,22 @@ class Controller:
     def AIPlayTurn(self):
         time.sleep(0.7)
         AIPlayer = self.players[self.currentPlayerIndex]
-        AI_Index = self.players.index(AIPlayer)  
-        playerTopCards = self.players[0].topCards  
+        AI_Index = self.players.index(AIPlayer)
+        playerTopCards = self.players[0].topCards
+        playerHand = self.players[0].hand
+        playerBottomCards = self.players[0].bottomCards
         playedCards = []
         pickUp = False
 
-        cardsToPlay = AIPlayer.playTurn(self.pile, len(self.deck), playerTopCards)
+        if self.difficulty == 'impossible':
+            cardsToPlay = AIPlayer.playTurn(self.pile, len(self.deck), playerTopCards, playerHand, playerBottomCards)
+        else:
+            cardsToPlay = AIPlayer.playTurn(self.pile, len(self.deck), playerTopCards)
+
         if cardsToPlay == -1:
             self.pickUpPile()
             return
-        
+
         for card in cardsToPlay:
             cardIndex = AIPlayer.hand.index(card)
             AI_HandLayout = getattr(self.view, f'AIHandLayout{AI_Index}')
@@ -402,25 +409,25 @@ class Controller:
                 playedCards.append(card)
                 for i, card in enumerate(playedCards):
                     self.pile.append(AIPlayer.hand.pop(AIPlayer.hand.index(playedCards[i])))
-                    self.pile[-1] = (card[0], card[1], card[2], False) 
+                    self.pile[-1] = (card[0], card[1], card[2], False)
                     self.view.revealCard(cardLabel, card)
                 pickUp = True
-                cardLabel.setParent(None) 
-                cardLabel.deleteLater() 
+                cardLabel.setParent(None)
+                cardLabel.deleteLater()
             else:
                 playedCards.append(card)
                 self.pile.append(AIPlayer.hand.pop(AIPlayer.hand.index(card)))
-                self.pile[-1] = (card[0], card[1], False, False)  
+                self.pile[-1] = (card[0], card[1], False, False)
                 self.view.revealCard(cardLabel, card)
-                cardLabel.setParent(None)  
-                cardLabel.deleteLater() 
+                cardLabel.setParent(None)
+                cardLabel.deleteLater()
 
         if pickUp:
             topCard = self.pile[-1]
             pixmap = QPixmap(fr"_internal/palaceData/cards/{topCard[0].lower()}_of_{topCard[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             self.view.pileLabel.setPixmap(pixmap)
             QCoreApplication.processEvents()
-            time.sleep(1.5)
+            time.sleep(1)
             self.pickUpPile()
             for card in reversed(AIPlayer.hand):
                 if card[3]:

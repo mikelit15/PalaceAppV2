@@ -140,8 +140,8 @@ class View(QWidget):
         # Hide AI Player 2 and 3 layouts if less than 3 or 4 players    
         if self.controller.numPlayers < 3:
             self.AIPlayerLabel2.setText("")
-            self.setGeometry(550, 75, 900, 900)
-            self.setFixedSize(900, 900)
+            self.setGeometry(550, 75, 900, 850)
+            self.setFixedSize(900, 850)
         if self.controller.numPlayers < 4:
             self.AIPlayerLabel3.setText("")
 
