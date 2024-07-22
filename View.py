@@ -189,7 +189,7 @@ class View(QWidget):
             else:
                 button.setFixedSize(BUTTON_WIDTH, BUTTON_HEIGHT)
             button.setStyleSheet("border: 0px solid black; background-color: transparent;")
-            if not card[3]: 
+            if not card[3] and isPlayer: 
                 pixmap = QPixmap(
                     fr"_internal\palaceData\cards\{card[0].lower()}_of_{card[1].lower()}.png")
                 if rotate:
