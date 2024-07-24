@@ -112,7 +112,6 @@ class Controller:
 
         # self.view.setPlayerHandEnabled(False)
         self.view.placeButton.setText("AI Turn...")
-        time.sleep(1)
         self.updateUI()
         self.changeTurn()
     
@@ -303,6 +302,7 @@ class Controller:
                 self.view.revealCard(button, card)
                 button.setParent(None)
                 button.deleteLater()  
+                
         if pickUp:
             topCard = self.pile[-1]
             pixmap = QPixmap(fr"_internal/palaceData/cards/{topCard[0].lower()}_of_{topCard[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
@@ -370,8 +370,8 @@ class Controller:
                 return
             self.changeTurn()
             self.view.setPlayerHandEnabled(False)
-            self.view.placeButton.setText("AI Turn...")
-
+            self.view.placeButton.setText("Opponent's Turn...")
+            
     '''
     Handles the AI player's turn, determining and executing the best move 
     based on the difficulty level and game state.
@@ -383,7 +383,7 @@ class Controller:
     @author Mike
     '''
     def AIPlayTurn(self):
-        time.sleep(0.7)
+        time.sleep(1)
         AIPlayer = self.players[self.currentPlayerIndex]
         AI_Index = self.players.index(AIPlayer)
         playerTopCards = self.players[0].topCards
@@ -399,6 +399,7 @@ class Controller:
 
         if cardsToPlay == -1:
             self.pickUpPile()
+            time.sleep(1)
             return
 
         for card in cardsToPlay:
@@ -426,16 +427,13 @@ class Controller:
             topCard = self.pile[-1]
             pixmap = QPixmap(fr"_internal/palaceData/cards/{topCard[0].lower()}_of_{topCard[1].lower()}.png").scaled(CARD_WIDTH, CARD_HEIGHT, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
             self.view.pileLabel.setPixmap(pixmap)
-            QCoreApplication.processEvents()
-            time.sleep(1)
             self.pickUpPile()
             for card in reversed(AIPlayer.hand):
                 if card[3]:
                     AIPlayer.bottomCards.append(AIPlayer.hand.pop(AIPlayer.hand.index(card)))
             self.view.updateAIHand(AIPlayer.hand, AI_Index)
             self.view.updateAIBottomCardButtons(AIPlayer.bottomCards, AI_Index)
-            # QCoreApplication.processEvents()
-            self.view.placeButton.setText("Select A Card")
+            time.sleep(1)
             return
 
         print(f"{AIPlayer.name} plays {', '.join([f'{card[0]} of {card[1]}' for card in playedCards])}")
@@ -451,6 +449,7 @@ class Controller:
             self.view.pileLabel.setText("Bombed")
             self.updateUI()
             gameOver = self.checkGameState()
+            time.sleep(1)
             return
 
         if '2' in [card[0] for card in playedCards]:
@@ -463,6 +462,7 @@ class Controller:
                 self.view.pileLabel.setText("Pile: Empty")
             self.updateUI()
             gameOver = self.checkGameState()
+            time.sleep(1)
             return
         elif '10' in [card[0] for card in playedCards]:
             self.pile.clear()
@@ -470,6 +470,7 @@ class Controller:
             self.view.pileLabel.setText("Bombed")
             self.updateUI()
             gameOver = self.checkGameState()
+            time.sleep(1)
             return
         else:
             if '7' in [card[0] for card in playedCards]:
@@ -485,7 +486,6 @@ class Controller:
             if gameOver:
                 return
             self.changeTurn()
-        self.view.placeButton.setText("Select A Card")
 
     '''
     Changes the turn to the next player and updates the game state.
@@ -498,6 +498,8 @@ class Controller:
     '''
     def changeTurn(self):
         self.currentPlayerIndex = (self.currentPlayerIndex + 1) % len(self.players)
+        if self.currentPlayerIndex == 0:
+            self.view.placeButton.setText("Select A Card")
         self.selectedCards = [] 
         self.updateUI()
 
@@ -558,7 +560,7 @@ class Controller:
                 self.view.currentPlayerLabel.setText(f"{currentPlayer.name} wins!")
                 self.view.pickUpPileButton.setDisabled(True)
                 self.view.placeButton.setDisabled(True)
-                for button in self.view.playCardButtons:
+                for button in self.playCardButtons:
                     button.setDisabled(True)
                 print(f"{currentPlayer.name} wins!")
                 gameOver = True

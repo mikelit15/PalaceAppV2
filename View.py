@@ -15,7 +15,6 @@ class View(QWidget):
     def __init__(self, controller, parent=None):
         super().__init__(parent)
         self.controller = controller
-        self.playCardButtons = []
         self.initUI()
 
     '''
