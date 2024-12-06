@@ -1,7 +1,7 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, \
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, \
     QLabel, QGridLayout, QSpacerItem, QSizePolicy
-from PyQt6.QtGui import QFontMetrics, QPixmap, QIcon, QTransform, QPainter
-from PyQt6.QtCore import Qt
+from PySide6.QtGui import QFontMetrics, QPixmap, QIcon, QTransform, QPainter
+from PySide6.QtCore import Qt
 
 CARD_WIDTH = 56
 CARD_HEIGHT = 84

@@ -1,7 +1,7 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, \
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, \
     QLabel, QDialog, QRadioButton, QButtonGroup
-from PyQt6.QtGui import QIcon
-from PyQt6.QtCore import Qt, QCoreApplication
+from PySide6.QtGui import QIcon
+from PySide6.QtCore import Qt, QCoreApplication
 from Controller import Controller
 
 class HomeScreen(QWidget):

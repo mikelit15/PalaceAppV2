@@ -1,8 +1,8 @@
 import random
 import time
-from PyQt6.QtWidgets import QLabel
-from PyQt6.QtGui import QPixmap
-from PyQt6.QtCore import Qt, QCoreApplication, QTimer
+from PySide6.QtWidgets import QLabel
+from PySide6.QtGui import QPixmap
+from PySide6.QtCore import Qt, QCoreApplication, QTimer
 from View import View
 from Player import Player
 from AIPlayer import AIPlayer
